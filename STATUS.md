@@ -12,7 +12,7 @@
 
 ---
 
-## 2. Phase 2: Evidence Verification, Extraction Schema & Evaluation (In Progress)
+## 2. Phase 2: Evidence Verification, Extraction Schema, Prompt & Evaluation (In Progress)
 
 ### Completed Locally:
 - [x] Implemented deterministic evidence verification utility in `src/lib/verifier.ts`.
@@ -25,27 +25,23 @@
   - 3 model-suggested statuses: `baseline`, `proposed`, `unclear`. (Terminal statuses `confirmed` and `dismissed` strictly forbidden from model output).
   - 3 confidence labels: `low`, `medium`, `high`.
   - Fully validated `ExtractedCandidate` and `ExtractionResult` container schemas.
-- [x] Authored 12 offline synthetic evaluation scenarios in `src/lib/evaluation-cases.ts`:
-  - 1. Clear baseline scope kickoff.
-  - 2. Additional feature scope request.
-  - 3. Conditional assent ("let me check with my partner").
-  - 4. Unclear authority acceptance (intern approval).
-  - 5. Option B predefined choice.
-  - 6. Vague revision threshold ("a few rounds").
-  - 7. Milestone deadline advancement.
-  - 8. Contradictory prices across messages ($150/hr vs $100/hr).
-  - 9. Superseding proposal (substituting icons for animations).
-  - 10. Smart quotes and soft line breaks.
-  - 11. Adversarial prompt injection in client text.
-  - 12. Hallucinated / fabricated quotation (negative verification test).
-- [x] Authored unit test suites:
+- [x] Authored 12 offline synthetic evaluation scenarios in `src/lib/evaluation-cases.ts`.
+- [x] Implemented extraction prompt builder and safety guardrails in `src/lib/extraction-prompt.ts`:
+  - Enforces 4 commitment types, 7 speech acts, and only 3 suggested statuses (`baseline`, `proposed`, `unclear`).
+  - Strictly prohibits model from outputting `confirmed` or `dismissed`.
+  - Enforces verbatim quotation copying without hallucination or paraphrasing.
+  - Delimits untrusted client communications inside `<<<UNTRUSTED_COMMUNICATION_SOURCE>>>` boundary tags.
+  - Formulates instructions to ignore embedded directives/injections in client source text.
+  - Mandates returning `{"candidates": []}` when evidence is insufficient or ambiguous.
+  - Matches `ExtractionResultSchema` output without schema divergence.
+- [x] Authored unit test suites (40 tests passing across 13 test suites via `npm test`):
   - `src/lib/verifier.test.ts` (16 tests).
-  - `src/lib/schema.test.ts` (13 tests validating schemas, terminal status rejection, and 12-scenario fixtures with verifier grounding).
-  - Total: 29 tests passing via Node.js test runner (`npm test`).
+  - `src/lib/schema.test.ts` (13 tests).
+  - `src/lib/extraction-prompt.test.ts` (11 tests).
 - [x] Quality checks clean: `npm test`, `npm run lint`, `npm run build`, and `git diff --check` all passing with 0 errors.
 
 ### What Remains Untested / Pending External Integration:
-- [ ] Live inference with Nebius Token Factory / NVIDIA models against the 12 scenarios.
+- [ ] Live inference with Nebius Token Factory / NVIDIA Nemotron models against the 12 scenarios.
 - [ ] Real-world model latency and token consumption metrics.
 - [ ] Accuracy evaluation script measuring model extraction agreement against `EVALUATION_SCENARIOS`.
 
@@ -54,7 +50,7 @@
 ## 3. Current Blockers
 
 - **None currently blocking.**
-- All verifier, schema, and evaluation scenario code executes 100% locally with zero external API dependencies or mock credentials.
+- All verifier, schema, prompt, and evaluation scenario code executes 100% locally with zero external API dependencies or mock credentials.
 
 ---
 
