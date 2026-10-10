@@ -12,19 +12,32 @@
 
 ---
 
-## 2. Current Blockers
+## 2. Phase 2: Evidence Verification & Model Evaluation (In Progress)
 
-- **None currently blocking.**
-- *Note:* Model evaluation with Nebius API is scheduled for Phase 2 prior to extractor and UI implementation.
+- [x] Implemented deterministic evidence verification utility in `src/lib/verifier.ts`.
+  - Verbatim exact match checking.
+  - Normalization for Unicode quotation marks/apostrophes and multiline whitespace differences without allowing material wording changes.
+  - Granular result typing (`verified: true` with matched indices vs. `verified: false` with specific failure reasons: `EMPTY_QUOTE`, `EMPTY_SOURCE`, `QUOTE_NOT_FOUND`, `MATERIAL_MISMATCH`).
+- [x] Added unit test suite in `src/lib/verifier.test.ts` (16 tests across 7 test suites passing).
+- [x] Added `npm test` script using Node.js built-in test runner.
+- [x] Verified zero lint warnings and successful Next.js production build (`npm run lint`, `npm run build`).
+- [ ] Configure Nebius Token Factory client for model benchmarking.
+- [ ] Implement evaluation harness for model candidate assessment.
 
 ---
 
-## 3. Next Milestones
+## 3. Current Blockers
 
-### Phase 2: Model Evaluation & Extraction Core
+- **None currently blocking.**
+- All Phase 2 verifier code runs 100% locally with zero external API dependencies.
+
+---
+
+## 4. Next Milestones
+
+### Phase 2: Model Evaluation Core (Pending External Evaluation)
 - Set up Nebius Token Factory client configuration using standard OpenAI client.
 - Test and benchmark candidate models for extraction accuracy, quote verification, and structured schema adherence.
-- Build deterministic evidence verification utility (`src/lib/verifier.ts`).
 - Create evaluation harness with realistic test cases (freelance email threads, scope change requests).
 
 ### Phase 3: Agreement Ledger & UI Panels
