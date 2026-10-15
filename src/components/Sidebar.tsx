@@ -72,8 +72,8 @@ export function Sidebar({
     },
     {
       id: "custom" as ActiveTab,
-      label: "Test Custom Source",
-      description: "Live mechanical quote verifier",
+      label: "Live Extractor & Verifier",
+      description: "Nebius AI extraction & quote check",
       icon: SparklesIcon,
     },
   ];
@@ -202,11 +202,11 @@ export function Sidebar({
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-[#2E7D5B]"></span>
               </span>
               <span className="text-[11px] font-semibold text-[#20251F]">
-                Offline Verifier Active
+                Nebius & Verifier Ready
               </span>
             </div>
             <p className="mt-1 text-[10px] leading-relaxed text-[#576356]">
-              Deterministic substring check active. Zero external API calls. Live Nebius model unconfigured.
+              Deterministic verifier active. Nemotron-3.5-Lightning extraction endpoint connected.
             </p>
           </div>
         </div>

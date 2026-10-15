@@ -79,7 +79,7 @@ Respond ONLY with a valid JSON object strictly matching this schema:
     }
   ]
 }
-Do not include any prose, markdown code fences, or explanation outside the JSON object.`;
+Do not include any thinking process, internal reasoning, markdown code fences, or explanation outside the JSON object. Output only the raw JSON object directly.`;
 
 /** Delimiters used to cleanly separate untrusted source communication from prompt instructions */
 export const UNTRUSTED_SOURCE_START_TAG = "<<<UNTRUSTED_COMMUNICATION_SOURCE>>>";
@@ -105,7 +105,7 @@ ${UNTRUSTED_SOURCE_START_TAG}
 ${sourceText}
 ${UNTRUSTED_SOURCE_END_TAG}
 
-Extract all valid candidates as JSON matching the ExtractionResultSchema. If no commitments are present or evidence is insufficient, return {"candidates": []}.`;
+Extract all valid candidates as JSON matching the ExtractionResultSchema. If no commitments are present or evidence is insufficient, return {"candidates": []}. Do not include any thinking process, reasoning, or markdown formatting; output only the complete JSON object directly.`;
 }
 
 /**

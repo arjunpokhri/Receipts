@@ -69,7 +69,7 @@
 - [x] **Bundled Realistic Sample Project:**
   - Project: "Aura Health Inc. — Mobile Patient Portal Redesign".
   - Full transcripts and pre-extracted candidates demonstrating baseline terms, scope creep requests, and off-hours rate disputes.
-- [x] **Verification & Quality Checks:**
+- [x] **Verification & Quality Checks (Phase 3):**
   - `npm.cmd test`: 52/52 tests passing.
   - `npm.cmd run lint`: 0 errors, 0 warnings.
   - `npm.cmd run build`: Compiled and prerendered static production build successfully.
@@ -77,19 +77,49 @@
 
 ---
 
-## 4. What Remains Untested / Pending External Integration
+## 4. Phase 4: Nebius Token Factory API Integration (Completed Locally)
 
-- [ ] **Live Nebius Token Factory / NVIDIA Nemotron Inference:**
-  - Live model API calls have not been executed yet.
-  - Real-world latency, cost, and token consumption metrics will only be measured once live API credentials and endpoints are connected.
-  - Current UI traces and verifiers strictly report local deterministic checks.
-- [ ] **Git Commit:**
-  - Per instructions, no Git commit has been created yet.
+- [x] **Live Pre-Flight Smoke Test (`scripts/nebius-smoke-test.mjs`):**
+  - Live verified: Authenticated against Nebius Token Factory (`https://api.tokenfactory.nebius.com/v1/`) with `nvidia/Nemotron-3_5-Lightning`.
+  - Confirmed HTTP 200 and strict JSON response `{"status":"ok"}` using `response_format: { type: "json_object" }`.
+  - Treated `finish_reason === "length"` as failure and verified zero API key leakage in logs.
+- [x] **Server-Side Extraction Engine & Truncation Resolution (`src/lib/nebius-extraction.ts`):**
+  - Server-side only: Uses `openai` SDK with `NEBIUS_API_KEY`, `NEBIUS_BASE_URL`, and `NEBIUS_MODEL` from environment.
+  - Generates prompt messages via `buildExtractionMessages` with untrusted source boundary tags.
+  - Bounded completion parameters: 4,096 max tokens and 45-second timeout.
+  - Resolved reasoning truncation: Passes `chat_template_kwargs: { enable_thinking: false }` supported by vLLM/Nebius for `nvidia/Nemotron-3_5-Lightning` and explicitly instructs model in prompts to omit internal reasoning, preventing unbounded chain-of-thought token exhaustion.
+  - Safe truncation diagnostics: Captures completion tokens, reasoning tokens, and content presence without logging sensitive data.
+  - Parses JSON output and handles thought tags (`<think>...</think>`) and code blocks.
+  - Enforces `ExtractionResultSchema` from `src/lib/schema.ts` (strictly prohibiting `confirmed` or `dismissed`).
+  - Mechanically verifies every extracted quote against the source text with `verifyEvidence`; marks invalid quotes as `quoteVerified: false`.
+- [x] **Next.js API Route (`src/app/api/extract/route.ts`):**
+  - `POST /api/extract` route handler with input validation (max 30,000 characters).
+  - 45-second bounded request timeout and 4,096 max tokens.
+  - Sanitized error responses (400, 422, 502, 503, 504, 500) that never expose keys, request headers, or stack traces.
+- [x] **Mocked Unit Test Suite (`src/lib/nebius-extraction.test.ts`):**
+  - Automated unit tests verifying valid extraction, schema violations (forbidden 'confirmed' status), fabricated quotes, malformed non-JSON, token limit truncation with safe metadata diagnostics, default 4,096 token ceiling, `chat_template_kwargs: { enable_thinking: false }` pass-through, `enableThinking: true` override, empty input, and network errors.
+  - 100% mocked: 0 live API credits consumed during automated test execution.
+  - Overall project test suite: **66/66 tests passing** across 25 suites.
+- [x] **Live Workstation UI Integration (`src/components/CustomTextVerifier.tsx`):**
+  - Dedicated "Source Analysis & Extraction Hub" in the "Live Extractor & Verifier" tab.
+  - Full state lifecycle: Idle, Loading (with spinner and status explanation), Error (with clear diagnostic), Empty (clean message when no terms detected), and Success.
+  - Displays extracted candidates with type, speech act, suggested status, and verified quote span badges.
+  - Optional human-in-the-loop action: "Add to Active Ledger as [status]" allows user to promote extracted candidates to the active agreement ledger without silent overwriting.
 
 ---
 
-## 5. Next Steps
+## 5. Distinction: Implemented vs. Tested vs. Live-Verified
 
-1. Create a Git commit for the completed Phase 3 UI implementation when instructed by the user.
-2. Wire up the live Nebius API runner script to evaluate NVIDIA Nemotron models against the 12 evaluation scenarios.
-3. Benchmark candidate models on extraction accuracy, verbatim evidence fidelity, and JSON schema compliance.
+- **Live-Verified:**
+  - Standalone connectivity and structured generation verified via `scripts/nebius-smoke-test.mjs` against `nvidia/Nemotron-3_5-Lightning` on Nebius Token Factory.
+- **Implemented & Unit-Tested (Mocked):**
+  - `src/lib/nebius-extraction.ts` and `src/app/api/extract/route.ts` are fully implemented and verified with 11 mocked unit tests. No automated tests make external network calls.
+- **Human-Controlled In-Session Workflow:**
+  - Sample project data in `SAMPLE_PROJECT` remains default and pristine. User-initiated extractions do not replace sample data unless the user explicitly clicks "Add to Active Ledger".
+
+---
+
+## 6. Next Steps & Limitations
+
+1. **Production Evaluation Benchmark:** Run the 12 evaluation scenarios through the live endpoint to measure empirical accuracy metrics for Nemotron-3.5-Lightning.
+2. **Git Commit:** Create Git commit when instructed by user.

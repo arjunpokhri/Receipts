@@ -95,6 +95,33 @@ export default function Home() {
     setSelectedItemId(item.id);
   };
 
+  const handleAddLiveCandidate = (candidate: {
+    id: string;
+    claim: string;
+    evidenceQuote: string;
+    speaker: string;
+    timestamp: string;
+    commitmentType: AgreementItem["commitmentType"];
+    speechAct: AgreementItem["speechAct"];
+    suggestedStatus: "baseline" | "proposed" | "unclear";
+    explanation: string;
+  }) => {
+    const newItem: AgreementItem = {
+      id: candidate.id,
+      claim: candidate.claim,
+      evidenceQuote: candidate.evidenceQuote,
+      speaker: candidate.speaker,
+      timestamp: candidate.timestamp,
+      commitmentType: candidate.commitmentType,
+      speechAct: candidate.speechAct,
+      status: candidate.suggestedStatus,
+      explanation: `[Nebius Extraction] ${candidate.explanation}`,
+      sourceThreadId: project.threads[0]?.id || "thread-kickoff",
+    };
+    setItems((prev) => [newItem, ...prev]);
+    setSelectedItemId(newItem.id);
+  };
+
   return (
     <div className="flex min-h-screen bg-[#F6F5F0] text-[#20251F] font-sans antialiased">
       {/* Persistent Left Sidebar */}
@@ -201,7 +228,7 @@ export default function Home() {
 
           {activeTab === "custom" && (
             <div className="max-w-5xl mx-auto">
-              <CustomTextVerifier />
+              <CustomTextVerifier onAddCandidateToLedger={handleAddLiveCandidate} />
             </div>
           )}
         </main>

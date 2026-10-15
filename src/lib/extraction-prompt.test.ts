@@ -64,6 +64,13 @@ describe("Extraction Prompt Builder & Guardrails", () => {
         "System prompt must require exact verbatim quotation"
       );
     });
+
+    it("instructs the model to output raw JSON directly without thinking process or reasoning", () => {
+      assert.ok(
+        EXTRACTION_SYSTEM_PROMPT.includes("Do not include any thinking process, internal reasoning"),
+        "System prompt must prohibit thinking process to prevent token exhaustion"
+      );
+    });
   });
 
   describe("Untrusted Input Delimiting & Guardrails", () => {
