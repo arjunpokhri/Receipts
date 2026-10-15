@@ -28,6 +28,14 @@ export function EvidenceInspector({
 }: EvidenceInspectorProps) {
   const currentThread = useMemo(() => {
     if (!item) return null;
+    if (item.sourceText) {
+      return {
+        id: item.sourceThreadId || "live-source",
+        title: "Live Pasted Correspondence",
+        channel: "Direct Input",
+        rawText: item.sourceText,
+      };
+    }
     return threads.find((t) => t.id === item.sourceThreadId) || threads[0];
   }, [item, threads]);
 

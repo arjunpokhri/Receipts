@@ -108,18 +108,39 @@
 
 ---
 
-## 5. Distinction: Implemented vs. Tested vs. Live-Verified
+## 5. Phase 5: Trust Boundaries & Ledger State Invariants (Completed Locally)
+
+- [x] **Pure Ledger Transition Actions (`src/lib/ledger-actions.ts`):**
+  - **Candidate Addition Protection:** Strictly refuses candidates where `quoteVerified !== true`, where source text is missing or whitespace, or where quotes fail mechanical verification against source text.
+  - **Baseline Trust Boundary Invariant:** Enforces the product rule that ordinary client correspondence cannot establish baseline status. Model-suggested `baseline` candidates are automatically downgraded to `proposed`, preserving `originalSuggestedStatus: "baseline"` and prefixing an explicit explanatory notice.
+  - **Direct Evidence Source Ownership:** Stores the exact source text directly on the ledger item (`sourceText`), ensuring downstream confirmation re-verifies against the original source communication rather than defaulting to bundled sample project threads.
+  - **Deterministic Confirmation Safeguards:** Confirms only items in `proposed` or `unclear` status. Strictly rejects confirmation of `baseline` (already established contract terms), `confirmed` (already terminal), and `dismissed` (must be restored first). Mechanically re-verifies evidence quotes against the item's stored source text prior to state change.
+  - **Honest Reviewer Attribution:** Replaced hardcoded personal identity `"Human Reviewer (Marcus Miller)"` with honest generic attribution (`"Human Reviewer"`).
+  - **Predictable Dismissal & Restoration Lifecycle:** Disallows dismissing `baseline` items or already dismissed items; restricts restoration exclusively to `dismissed` items (returning status to `proposed` or `unclear` based on original suggested status, and clearing `dismissedAt`).
+  - **Pure Collection Helpers:** Added immutable collection-level helpers (`confirmItemInLedger`, `dismissItemInLedger`, `restoreItemInLedger`, `addCandidateToLedgerItems`) for reliable React state updates.
+- [x] **UI Wire-Up & Trust Badging:**
+  - `src/app/page.tsx`: Rewired `handleConfirmItem`, `handleDismissItem`, `handleRestoreItem`, and `handleAddLiveCandidate` to use pure domain actions. Updated verified item counter to resolve against each item's authoritative `sourceText`.
+  - `src/components/CustomTextVerifier.tsx`: Passes `sourceText` alongside candidates, disables the ledger addition button when `quoteVerified !== true` with clear visual feedback, and explicitly displays that baseline suggestions are added as proposed (downgraded).
+  - `src/components/EvidenceInspector.tsx`: Resolves `item.sourceText` directly when inspecting live extracted items.
+- [x] **Comprehensive Test Suite (89/89 Passing):**
+  - Added `src/lib/ledger-actions.test.ts` (23 tests) covering candidate rejection on unverified quote, baseline downgrade, terminal status prohibition, source text ownership isolation, confirmation re-verification against stored source, dismissal/restoration state machines, and immutable collection updates.
+  - Overall project test suite: **89/89 tests passing** across 30 suites.
+
+---
+
+## 6. Distinction: Implemented vs. Tested vs. Live-Verified
 
 - **Live-Verified:**
   - Standalone connectivity and structured generation verified via `scripts/nebius-smoke-test.mjs` against `nvidia/Nemotron-3_5-Lightning` on Nebius Token Factory.
-- **Implemented & Unit-Tested (Mocked):**
-  - `src/lib/nebius-extraction.ts` and `src/app/api/extract/route.ts` are fully implemented and verified with 11 mocked unit tests. No automated tests make external network calls.
+- **Implemented & Unit-Tested (Mocked/Deterministic):**
+  - All core libraries (`verifier.ts`, `schema.ts`, `extraction-prompt.ts`, `evaluate-extraction.ts`, `nebius-extraction.ts`, `ledger-actions.ts`) are 100% verified locally with 89 automated tests. Zero automated tests make external network calls.
 - **Human-Controlled In-Session Workflow:**
   - Sample project data in `SAMPLE_PROJECT` remains default and pristine. User-initiated extractions do not replace sample data unless the user explicitly clicks "Add to Active Ledger".
 
 ---
 
-## 6. Next Steps & Limitations
+## 7. Next Steps & Limitations
 
 1. **Production Evaluation Benchmark:** Run the 12 evaluation scenarios through the live endpoint to measure empirical accuracy metrics for Nemotron-3.5-Lightning.
-2. **Git Commit:** Create Git commit when instructed by user.
+2. **Designated Baseline Workflow:** In a future phase, implement an explicit user-designated flow for onboarding an initial contract/agreement as `baseline`.
+3. **Git Commit:** Create Git commit when instructed by user.

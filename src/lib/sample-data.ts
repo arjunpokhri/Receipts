@@ -2,6 +2,7 @@ import type {
   CommitmentType,
   SpeechAct,
   ApplicationStatus,
+  SuggestedStatus,
 } from "./schema.ts";
 
 export interface AgreementItem {
@@ -15,6 +16,12 @@ export interface AgreementItem {
   status: ApplicationStatus;
   explanation: string;
   sourceThreadId: string;
+  /** Optional stored source communication text directly attached to the item */
+  sourceText?: string;
+  /** Optional original status suggested by model before trust-boundary policy adjustments */
+  originalSuggestedStatus?: SuggestedStatus;
+  /** Whether the evidence quotation was mechanically verified against source text */
+  quoteVerified?: boolean;
   confirmedAt?: string;
   confirmedBy?: string;
   dismissedAt?: string;

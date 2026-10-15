@@ -12,6 +12,14 @@ import { ExecutionTracePanel } from "@/components/ExecutionTracePanel";
 import { CustomTextVerifier } from "@/components/CustomTextVerifier";
 import { SAMPLE_PROJECT, type AgreementItem } from "@/lib/sample-data";
 import { verifyEvidence } from "@/lib/verifier";
+import {
+  confirmItemInLedger,
+  dismissItemInLedger,
+  restoreItemInLedger,
+  addCandidateToLedgerItems,
+  resolveItemSourceText,
+  type LiveCandidateInput,
+} from "@/lib/ledger-actions";
 
 export default function Home() {
   const [project] = useState(SAMPLE_PROJECT);
@@ -22,68 +30,43 @@ export default function Home() {
 
   const selectedItem = items.find((i) => i.id === selectedItemId) || null;
 
-  // Calculate verified items count against source text
+  // Calculate verified items count against each item's authoritative source text
   const verifiedCount = items.filter((item) => {
-    const thread = project.threads.find((t) => t.id === item.sourceThreadId) || project.threads[0];
-    return verifyEvidence(thread.rawText, item.evidenceQuote).verified;
+    const sourceText = resolveItemSourceText(item, project.threads);
+    if (!sourceText) return false;
+    return verifyEvidence(sourceText, item.evidenceQuote).verified;
   }).length;
 
   const pendingCount = items.filter(
     (i) => i.status === "proposed" || i.status === "unclear"
   ).length;
 
-  // Handlers for human-controlled agreement transitions
+  // Handlers for human-controlled agreement transitions using pure domain functions
   const handleConfirmItem = (id: string) => {
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              status: "confirmed",
-              confirmedAt: new Date().toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              }),
-              confirmedBy: "Human Reviewer (Marcus Miller)",
-            }
-          : item
-      )
-    );
+    const result = confirmItemInLedger(items, id, project.threads);
+    if (result.success) {
+      setItems(result.items);
+    } else {
+      console.warn("Confirmation refused:", result.error);
+    }
   };
 
   const handleDismissItem = (id: string) => {
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              status: "dismissed",
-              dismissedAt: new Date().toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              }),
-            }
-          : item
-      )
-    );
+    const result = dismissItemInLedger(items, id);
+    if (result.success) {
+      setItems(result.items);
+    } else {
+      console.warn("Dismissal refused:", result.error);
+    }
   };
 
   const handleRestoreItem = (id: string) => {
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              status: "proposed",
-              dismissedAt: undefined,
-            }
-          : item
-      )
-    );
+    const result = restoreItemInLedger(items, id);
+    if (result.success) {
+      setItems(result.items);
+    } else {
+      console.warn("Restoration refused:", result.error);
+    }
   };
 
   const handleReset = () => {
@@ -95,31 +78,20 @@ export default function Home() {
     setSelectedItemId(item.id);
   };
 
-  const handleAddLiveCandidate = (candidate: {
-    id: string;
-    claim: string;
-    evidenceQuote: string;
-    speaker: string;
-    timestamp: string;
-    commitmentType: AgreementItem["commitmentType"];
-    speechAct: AgreementItem["speechAct"];
-    suggestedStatus: "baseline" | "proposed" | "unclear";
-    explanation: string;
-  }) => {
-    const newItem: AgreementItem = {
-      id: candidate.id,
-      claim: candidate.claim,
-      evidenceQuote: candidate.evidenceQuote,
-      speaker: candidate.speaker,
-      timestamp: candidate.timestamp,
-      commitmentType: candidate.commitmentType,
-      speechAct: candidate.speechAct,
-      status: candidate.suggestedStatus,
-      explanation: `[Nebius Extraction] ${candidate.explanation}`,
-      sourceThreadId: project.threads[0]?.id || "thread-kickoff",
+  const handleAddLiveCandidate = (
+    candidate: LiveCandidateInput,
+    sourceText: string
+  ): { success: boolean; error?: string } => {
+    const result = addCandidateToLedgerItems(items, candidate, sourceText);
+    if (result.success && result.affectedItem) {
+      setItems(result.items);
+      setSelectedItemId(result.affectedItem.id);
+      return { success: true };
+    }
+    return {
+      success: false,
+      error: result.error || "Failed to add candidate to ledger.",
     };
-    setItems((prev) => [newItem, ...prev]);
-    setSelectedItemId(newItem.id);
   };
 
   return (

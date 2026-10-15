@@ -30,7 +30,10 @@ interface ExtractionApiResponse {
 }
 
 interface CustomTextVerifierProps {
-  onAddCandidateToLedger?: (candidate: VerifiedExtractedCandidate) => void;
+  onAddCandidateToLedger?: (
+    candidate: VerifiedExtractedCandidate,
+    sourceText: string
+  ) => { success: boolean; error?: string } | void;
 }
 
 export function CustomTextVerifier({ onAddCandidateToLedger }: CustomTextVerifierProps) {
@@ -87,10 +90,20 @@ export function CustomTextVerifier({ onAddCandidateToLedger }: CustomTextVerifie
   };
 
   const handleAddToLedger = (candidate: VerifiedExtractedCandidate) => {
-    if (onAddCandidateToLedger) {
-      onAddCandidateToLedger(candidate);
-      setAddedCandidateIds((prev) => new Set(prev).add(candidate.id));
+    if (!onAddCandidateToLedger) return;
+
+    if (candidate.quoteVerified !== true) {
+      setExtractionError("Cannot add candidate: evidence quotation failed mechanical verification.");
+      return;
     }
+
+    const res = onAddCandidateToLedger(candidate, sourceText);
+    if (res && res.success === false) {
+      setExtractionError(res.error || "Failed to add candidate to ledger.");
+      return;
+    }
+
+    setAddedCandidateIds((prev) => new Set(prev).add(candidate.id));
   };
 
   const typeIcons: Record<CommitmentType, React.ComponentType<{ className?: string }>> = {
@@ -285,28 +298,55 @@ export function CustomTextVerifier({ onAddCandidateToLedger }: CustomTextVerifie
 
                       {/* Explicit Human Ledger Addition Action */}
                       {onAddCandidateToLedger && (
-                        <button
-                          type="button"
-                          onClick={() => handleAddToLedger(cand)}
-                          disabled={isAdded}
-                          className={`inline-flex items-center gap-1.5 border px-2.5 py-1 text-xs font-sans font-medium transition-all ${
-                            isAdded
-                              ? "border-[#2E7D5B]/30 bg-[#F0F6F2] text-[#244D3A] cursor-default"
-                              : "border-[#20251F]/20 bg-white text-[#20251F] hover:border-[#244D3A] hover:bg-[#E7EEE8]"
-                          }`}
-                        >
-                          {isAdded ? (
-                            <>
-                              <CheckIcon className="h-3.5 w-3.5 text-[#2E7D5B]" />
-                              <span>Added to Ledger</span>
-                            </>
-                          ) : (
-                            <>
-                              <span>Add to Active Ledger as</span>
-                              <strong className="capitalize">{cand.suggestedStatus}</strong>
-                            </>
+                        <div className="flex flex-col items-end gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleAddToLedger(cand)}
+                            disabled={isAdded || cand.quoteVerified !== true}
+                            title={
+                              cand.quoteVerified !== true
+                                ? "Evidence verification failed against source text"
+                                : cand.suggestedStatus === "baseline"
+                                ? "Model suggested baseline, but ordinary correspondence cannot establish baseline. It will be added as proposed."
+                                : undefined
+                            }
+                            className={`inline-flex items-center gap-1.5 border px-2.5 py-1 text-xs font-sans font-medium transition-all ${
+                              isAdded
+                                ? "border-[#2E7D5B]/30 bg-[#F0F6F2] text-[#244D3A] cursor-default"
+                                : cand.quoteVerified !== true
+                                ? "border-[#C95C4B]/30 bg-[#FDF2F0] text-[#A83827] cursor-not-allowed opacity-75"
+                                : "border-[#20251F]/20 bg-white text-[#20251F] hover:border-[#244D3A] hover:bg-[#E7EEE8]"
+                            }`}
+                          >
+                            {isAdded ? (
+                              <>
+                                <CheckIcon className="h-3.5 w-3.5 text-[#2E7D5B]" />
+                                <span>Added to Ledger</span>
+                              </>
+                            ) : cand.quoteVerified !== true ? (
+                              <>
+                                <XCircleIcon className="h-3.5 w-3.5 text-[#C95C4B]" />
+                                <span>Verification Failed (Cannot Add)</span>
+                              </>
+                            ) : cand.suggestedStatus === "baseline" ? (
+                              <>
+                                <span>Add to Active Ledger as</span>
+                                <strong>Proposed</strong>
+                                <span className="text-[10px] text-[#889386] font-normal">(downgraded)</span>
+                              </>
+                            ) : (
+                              <>
+                                <span>Add to Active Ledger as</span>
+                                <strong className="capitalize">{cand.suggestedStatus}</strong>
+                              </>
+                            )}
+                          </button>
+                          {cand.suggestedStatus === "baseline" && !isAdded && (
+                            <span className="text-[10px] text-[#889386]">
+                              * Model suggested baseline; original agreement must be designated separately.
+                            </span>
                           )}
-                        </button>
+                        </div>
                       )}
                     </div>
 
