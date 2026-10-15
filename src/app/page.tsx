@@ -1,28 +1,211 @@
+"use client";
+
+import React, { useState } from "react";
+import { Sidebar, type ActiveTab } from "@/components/Sidebar";
+import { Header } from "@/components/Header";
+import { BentoOverview } from "@/components/BentoOverview";
+import { AgreementLedger } from "@/components/AgreementLedger";
+import { RequestReview } from "@/components/RequestReview";
+import { EvidenceInspector } from "@/components/EvidenceInspector";
+import { ReplyDraftPanel } from "@/components/ReplyDraftPanel";
+import { ExecutionTracePanel } from "@/components/ExecutionTracePanel";
+import { CustomTextVerifier } from "@/components/CustomTextVerifier";
+import { SAMPLE_PROJECT, type AgreementItem } from "@/lib/sample-data";
+import { verifyEvidence } from "@/lib/verifier";
+
 export default function Home() {
+  const [project] = useState(SAMPLE_PROJECT);
+  const [items, setItems] = useState<AgreementItem[]>(SAMPLE_PROJECT.initialItems);
+  const [activeTab, setActiveTab] = useState<ActiveTab>("ledger");
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(items[0]?.id || null);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  const selectedItem = items.find((i) => i.id === selectedItemId) || null;
+
+  // Calculate verified items count against source text
+  const verifiedCount = items.filter((item) => {
+    const thread = project.threads.find((t) => t.id === item.sourceThreadId) || project.threads[0];
+    return verifyEvidence(thread.rawText, item.evidenceQuote).verified;
+  }).length;
+
+  const pendingCount = items.filter(
+    (i) => i.status === "proposed" || i.status === "unclear"
+  ).length;
+
+  // Handlers for human-controlled agreement transitions
+  const handleConfirmItem = (id: string) => {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              status: "confirmed",
+              confirmedAt: new Date().toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+              confirmedBy: "Human Reviewer (Marcus Miller)",
+            }
+          : item
+      )
+    );
+  };
+
+  const handleDismissItem = (id: string) => {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              status: "dismissed",
+              dismissedAt: new Date().toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+            }
+          : item
+      )
+    );
+  };
+
+  const handleRestoreItem = (id: string) => {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              status: "proposed",
+              dismissedAt: undefined,
+            }
+          : item
+      )
+    );
+  };
+
+  const handleReset = () => {
+    setItems(SAMPLE_PROJECT.initialItems);
+    setSelectedItemId(SAMPLE_PROJECT.initialItems[0]?.id || null);
+  };
+
+  const handleSelectItem = (item: AgreementItem) => {
+    setSelectedItemId(item.id);
+  };
+
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 flex flex-col items-center justify-center p-8 font-sans">
-      <main className="max-w-xl w-full border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-lg p-8 shadow-sm">
-        <div className="flex items-center gap-3 mb-4">
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold uppercase tracking-wider bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200">
-            Phase 1 Foundation
-          </span>
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">
-            Internal Preview
-          </span>
-        </div>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50 mb-2">
-          Receipts
-        </h1>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-6">
-          Evidence-backed agreement and scope tracker for freelancers and small agencies.
-        </p>
-        <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
-          <p className="font-medium mb-1">Status: Product workflow not implemented yet</p>
-          <p className="text-amber-800 dark:text-amber-300">
-            The foundation setup is complete. Agreement extraction, classifier verification, evaluation harness, and interactive panels will be implemented following model evaluation and architectural sign-off.
-          </p>
-        </div>
-      </main>
+    <div className="flex min-h-screen bg-[#F6F5F0] text-[#20251F] font-sans antialiased">
+      {/* Persistent Left Sidebar */}
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        pendingCount={pendingCount}
+        totalCount={items.length}
+        isMobileOpen={isMobileOpen}
+        setIsMobileOpen={setIsMobileOpen}
+      />
+
+      {/* Main Workspace Area */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Project Header */}
+        <Header
+          project={project}
+          items={items}
+          onReset={handleReset}
+          onOpenMobileMenu={() => setIsMobileOpen(true)}
+        />
+
+        {/* Scrollable Main Content */}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6 space-y-5">
+          {/* Top Bento Overview */}
+          <BentoOverview
+            items={items}
+            verifiedCount={verifiedCount}
+            onSelectTab={(tab) => {
+              setActiveTab(tab);
+            }}
+          />
+
+          {/* Tab Content Display */}
+          {activeTab === "ledger" && (
+            <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
+              <div className={selectedItem ? "xl:col-span-8" : "xl:col-span-12"}>
+                <AgreementLedger
+                  items={items}
+                  selectedItemId={selectedItemId}
+                  onSelectItem={handleSelectItem}
+                  onConfirmItem={handleConfirmItem}
+                  onDismissItem={handleDismissItem}
+                  onRestoreItem={handleRestoreItem}
+                />
+              </div>
+              {selectedItem && (
+                <div className="xl:col-span-4">
+                  <EvidenceInspector
+                    item={selectedItem}
+                    threads={project.threads}
+                    onClose={() => setSelectedItemId(null)}
+                    onConfirmItem={handleConfirmItem}
+                    onDismissItem={handleDismissItem}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === "review" && (
+            <RequestReview
+              items={items}
+              onSelectItem={(item) => {
+                handleSelectItem(item);
+                setActiveTab("evidence");
+              }}
+              onConfirmItem={handleConfirmItem}
+              onDismissItem={handleDismissItem}
+              onDraftForPending={() => setActiveTab("draft")}
+            />
+          )}
+
+          {activeTab === "evidence" && (
+            <div className="max-w-4xl mx-auto">
+              <EvidenceInspector
+                item={selectedItem}
+                threads={project.threads}
+                onClose={() => setActiveTab("ledger")}
+                onConfirmItem={handleConfirmItem}
+                onDismissItem={handleDismissItem}
+              />
+            </div>
+          )}
+
+          {activeTab === "draft" && (
+            <div className="max-w-4xl mx-auto">
+              <ReplyDraftPanel
+                project={project}
+                items={items}
+                selectedItem={selectedItem}
+              />
+            </div>
+          )}
+
+          {activeTab === "trace" && (
+            <div className="max-w-4xl mx-auto">
+              <ExecutionTracePanel
+                items={items}
+                threads={project.threads}
+              />
+            </div>
+          )}
+
+          {activeTab === "custom" && (
+            <div className="max-w-5xl mx-auto">
+              <CustomTextVerifier />
+            </div>
+          )}
+        </main>
+      </div>
     </div>
   );
 }

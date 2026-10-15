@@ -1,26 +1,172 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Editorial Light Palette */
+  --paper: #F6F5F0;
+  --paper-card: #FFFFFF;
+  --forest: #244D3A;
+  --forest-hover: #1D3F30;
+  --forest-light: #EBF3EE;
+  --ink: #20251F;
+  --ink-muted: #576356;
+  --ink-subtle: #889386;
+  --sage: #E7EEE8;
+  --sage-border: #D8E0D9;
+
+  /* Semantic Status Tokens */
+  --amber-state: #C58A36;
+  --amber-bg: #FAF3E8;
+  --amber-border: #E8CA97;
+  --coral-state: #C95C4B;
+  --coral-bg: #FAEEEC;
+  --coral-border: #EAB2A9;
+  --emerald-state: #2E7D5B;
+  --emerald-bg: #EBF5F0;
+  --emerald-border: #A3D3BE;
+
+  /* Glassmorphism token (warm paper-white, calm & readable) */
+  --glass-bg: rgba(255, 255, 255, 0.96);
+  --glass-border: rgba(32, 37, 31, 0.1);
+  --glass-shadow: 0 4px 20px -2px rgba(32, 37, 31, 0.05);
+
+  /* Next.js default variables mapped */
+  --background: var(--paper);
+  --foreground: var(--ink);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-paper: var(--paper);
+  --color-paper-card: var(--paper-card);
+  --color-forest: var(--forest);
+  --color-forest-hover: var(--forest-hover);
+  --color-forest-light: var(--forest-light);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-subtle: var(--ink-subtle);
+  --color-sage: var(--sage);
+  --color-sage-border: var(--sage-border);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-amber: var(--amber-state);
+  --color-amber-bg: var(--amber-bg);
+  --color-amber-border: var(--amber-border);
+
+  --color-coral: var(--coral-state);
+  --color-coral-bg: var(--coral-bg);
+  --color-coral-border: var(--coral-border);
+
+  --color-emerald: var(--emerald-state);
+  --color-emerald-bg: var(--emerald-bg);
+  --color-emerald-border: var(--emerald-border);
+
+  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-serif: var(--font-newsreader), Georgia, serif;
+  --font-mono: var(--font-geist-mono), monospace;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Glassmorphism utility */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+/* Neumorphic subtle inset control */
+.neumorph-inset {
+  background: var(--sage);
+  border: 1px solid var(--sage-border);
+  box-shadow: inset 1px 1px 2px rgba(32, 37, 31, 0.06), inset -1px -1px 2px rgba(255, 255, 255, 0.7);
+}
+
+/* Neumorphic tactile surface */
+.neumorph-surface {
+  background: var(--paper-card);
+  border: 1px solid var(--sage-border);
+  box-shadow: 1px 1px 3px rgba(32, 37, 31, 0.04);
+}
+
+/* Restrained signature buttons */
+.brutal-btn-primary {
+  background-color: var(--forest);
+  color: #FFFFFF;
+  border: 1px solid var(--ink);
+  box-shadow: 1.5px 1.5px 0px var(--ink);
+  font-weight: 500;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.1s ease;
+}
+
+.brutal-btn-primary:hover {
+  background-color: var(--forest-hover);
+  transform: translate(-0.5px, -0.5px);
+  box-shadow: 2px 2px 0px var(--ink);
+}
+
+.brutal-btn-primary:active {
+  transform: translate(1px, 1px);
+  box-shadow: 0.5px 0.5px 0px var(--ink);
+}
+
+.brutal-btn-outline {
+  background-color: var(--paper-card);
+  color: var(--ink);
+  border: 1px solid rgba(32, 37, 31, 0.22);
+  box-shadow: 1px 1px 0px rgba(32, 37, 31, 0.1);
+  font-weight: 500;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease;
+}
+
+.brutal-btn-outline:hover {
+  transform: translate(-0.5px, -0.5px);
+  border-color: var(--ink);
+  box-shadow: 1.5px 1.5px 0px rgba(32, 37, 31, 0.18);
+  background-color: var(--forest-light);
+}
+
+.brutal-btn-outline:active {
+  transform: translate(0.5px, 0.5px);
+  box-shadow: 0.5px 0.5px 0px rgba(32, 37, 31, 0.1);
+}
+
+.brutal-tag {
+  border: 1px solid var(--ink);
+  box-shadow: 1px 1px 0px var(--ink);
+}
+
+/* Custom subtle scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--sage-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-subtle);
+}
+
+.table-scroll-container::-webkit-scrollbar {
+  height: 5px;
+}
+.table-scroll-container::-webkit-scrollbar-track {
+  background: rgba(231, 238, 232, 0.6);
+}
+.table-scroll-container::-webkit-scrollbar-thumb {
+  background: var(--ink-muted);
+  border-radius: 2.5px;
+}
+.table-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: var(--ink);
 }
