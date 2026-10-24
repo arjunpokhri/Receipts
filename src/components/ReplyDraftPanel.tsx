@@ -8,27 +8,12 @@ import {
   RefreshCwIcon,
 } from "./icons";
 import type { AgreementItem, ProjectData } from "@/lib/sample-data";
+import { generateReplyDraft } from "@/lib/reply-draft";
 
 interface ReplyDraftPanelProps {
   project: ProjectData;
   items: AgreementItem[];
   selectedItem: AgreementItem | null;
-}
-
-function generateDefaultDraft(project: ProjectData, item?: AgreementItem): string {
-  if (!item) {
-    return `Hi ${project.clientName},\n\nThanks for checking in. We are on schedule with our baseline commitments for ${project.title}. Please let us know if there is anything else you need.\n\nBest,\n${project.contractorName}`;
-  }
-
-  if (item.commitmentType === "deliverables") {
-    return `Hi ${project.clientName},\n\nThanks for sending over the note regarding the "${item.claim}".\n\nTo ensure our delivery timeline (October 17th) and agreed fixed scope ($3,500 baseline) remain on track, this deliverable falls outside our initial kickoff agreement ("${item.evidenceQuote}").\n\nWe would be glad to build this! We can prepare a quick change order for the additional asset or scope it into Phase 2 immediately following launch.\n\nPlease let me know how you would like to proceed.\n\nBest,\n${project.contractorName}`;
-  }
-
-  if (item.commitmentType === "prices") {
-    return `Hi ${project.clientName},\n\nI wanted to quickly align on the rate terms mentioned in our conversation ("${item.evidenceQuote}").\n\nOur contractual rate for off-hours and weekend maintenance is $150/hr to ensure dedicated engineering availability, rather than $100/hr. Could you confirm that $150/hr works for your team before we schedule the weekend deployment window?\n\nBest,\n${project.contractorName}`;
-  }
-
-  return `Hi ${project.clientName},\n\nRegarding our recent discussion: "${item.evidenceQuote}", I wanted to confirm how we should incorporate this into the project schedule.\n\nCould you confirm if this is approved so we can update the project ledger accordingly?\n\nBest regards,\n${project.contractorName}`;
 }
 
 export function ReplyDraftPanel({
@@ -60,7 +45,7 @@ export function ReplyDraftPanel({
   const currentItem = pendingItems.find((i) => i.id === resolvedActiveId) ?? pendingItems[0];
   const itemKey = currentItem?.id ?? "__default";
 
-  const defaultDraft = generateDefaultDraft(project, currentItem);
+  const defaultDraft = generateReplyDraft(currentItem, project);
   const draftContent = userEdits[itemKey] ?? defaultDraft;
 
   const handleCopy = () => {

@@ -9,6 +9,7 @@ import {
 } from "./icons";
 import type { AgreementItem, ConversationThread } from "@/lib/sample-data";
 import { verifyEvidence } from "@/lib/verifier";
+import { resolveItemSource, type ResolvedItemSource } from "@/lib/source-resolver";
 import { MECHANICAL_VERIFICATION_DISCLAIMER } from "@/lib/evaluate-extraction";
 
 interface EvidenceInspectorProps {
@@ -26,25 +27,17 @@ export function EvidenceInspector({
   onConfirmItem,
   onDismissItem,
 }: EvidenceInspectorProps) {
-  const currentThread = useMemo(() => {
+  const source: ResolvedItemSource | null = useMemo(() => {
     if (!item) return null;
-    if (item.sourceText) {
-      return {
-        id: item.sourceThreadId || "live-source",
-        title: "Live Pasted Correspondence",
-        channel: "Direct Input",
-        rawText: item.sourceText,
-      };
-    }
-    return threads.find((t) => t.id === item.sourceThreadId) || threads[0];
+    return resolveItemSource(item, threads) || null;
   }, [item, threads]);
 
   const verification = useMemo(() => {
-    if (!item || !currentThread) return null;
-    return verifyEvidence(currentThread.rawText, item.evidenceQuote);
-  }, [item, currentThread]);
+    if (!item || !source) return null;
+    return verifyEvidence(source.sourceText, item.evidenceQuote);
+  }, [item, source]);
 
-  if (!item || !currentThread) {
+  if (!item || !source) {
     return (
       <div className="border border-[#20251F]/10 bg-white p-6 text-center shadow-xs">
         <div className="mx-auto flex h-9 w-9 items-center justify-center border border-[#20251F]/15 bg-[#F6F5F0] text-[#576356]">
@@ -62,7 +55,7 @@ export function EvidenceInspector({
 
   // Render raw conversation text with highlighted quotation
   const renderHighlightedConversation = () => {
-    const raw = currentThread.rawText;
+    const raw = source.sourceText;
     if (!verification || !verification.verified) {
       return <pre className="font-mono text-xs text-[#20251F] whitespace-pre-wrap">{raw}</pre>;
     }
@@ -148,7 +141,7 @@ export function EvidenceInspector({
       <div className="mt-3 border border-[#20251F]/10 border-l-2 border-l-[#244D3A] bg-[#FAF9F5] p-3">
         <div className="flex items-center justify-between text-[11px] font-sans text-[#889386]">
           <span className="font-medium text-[#576356]">Extracted Quotation</span>
-          <span>Source: {currentThread.channel}</span>
+          <span>Source: {source.channel}</span>
         </div>
         <blockquote className="mt-1.5 font-serif italic text-xs text-[#20251F] leading-relaxed">
           “{item.evidenceQuote}”
@@ -162,7 +155,7 @@ export function EvidenceInspector({
       {/* Source Conversation Context Viewer */}
       <div className="mt-3 flex-1">
         <div className="flex items-center justify-between text-xs font-sans text-[#576356] mb-1">
-          <span className="font-medium">Source: {currentThread.title}</span>
+          <span className="font-medium">Source: {source.title}</span>
           <span className="text-[10px] text-[#889386] font-mono">raw log</span>
         </div>
         <div className="max-h-52 overflow-y-auto border border-[#20251F]/10 bg-white p-3">

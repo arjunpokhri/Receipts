@@ -128,18 +128,38 @@
 
 ---
 
-## 6. Distinction: Implemented vs. Tested vs. Live-Verified
+## 6. Phase 6: Source Integrity & Accurate Reply Drafts (Completed Locally)
+
+- [x] **Pure Authoritative Source Resolver (`src/lib/source-resolver.ts`):**
+  - **Isolated Source Ownership:** Implemented `resolveItemSource(item, threads)` and `resolveItemSourceText(item, threads)` to consistently determine authoritative source text and metadata.
+  - **Live Correspondence Precedence:** Prefers `item.sourceText` when present, returning structured metadata (`title: "Live Pasted Correspondence"`, `channel: "Direct Input"`).
+  - **Strict Thread Matching:** For items without `sourceText`, resolves strictly against the thread whose `id === item.sourceThreadId`.
+  - **Zero Silent Fallbacks:** Completely eliminated silent fallbacks to `threads[0]` across `ExecutionTracePanel.tsx` and `EvidenceInspector.tsx`. Unlinked or invalid sources resolve to `undefined` and are reported cleanly as unlinked/missing.
+  - Re-exported from `src/lib/ledger-actions.ts` for unified domain consumption.
+- [x] **Pure, Evidence-Grounded Reply Draft Engine (`src/lib/reply-draft.ts`):**
+  - **Eliminated Hardcoded Sample Specifics:** Removed all hardcoded sample values (`$3,500`, `October 17th`, `$150/hr`, `$100/hr`, "Phase 2", "weekend maintenance") from live draft generation.
+  - **Evidence Grounding:** Dynamically crafts non-confrontational clarification drafts grounded strictly in `item.claim`, `item.evidenceQuote`, and explicit project metadata.
+  - **Graceful Fallbacks:** Employs neutral wording and placeholders (`"Hello,"`, `"Best regards,"`, `"this scope item"`, `"[cited evidence]"`) when client, contractor, or quote fields are missing, preventing `undefined` artifacts or invented terms.
+  - **Preserved Human Review:** Connected to `ReplyDraftPanel.tsx`, maintaining user editing buffers, copy-to-clipboard, template reset, and explicit notice that drafts are never auto-sent.
+- [x] **Regression Test Suites (103/103 Passing):**
+  - Added `src/lib/source-resolver.test.ts` (7 tests) verifying live text precedence, thread resolution, rejection of fallback to `threads[0]` on unknown IDs, and parity between verifier and execution-trace sources.
+  - Added `src/lib/reply-draft.test.ts` (7 tests) verifying absence of hardcoded sample values across all commitment types, graceful degradation on missing metadata, and preservation of sample project drafting.
+  - Overall project test suite: **103/103 tests passing** across 34 suites.
+
+---
+
+## 7. Distinction: Implemented vs. Tested vs. Live-Verified
 
 - **Live-Verified:**
   - Standalone connectivity and structured generation verified via `scripts/nebius-smoke-test.mjs` against `nvidia/Nemotron-3_5-Lightning` on Nebius Token Factory.
 - **Implemented & Unit-Tested (Mocked/Deterministic):**
-  - All core libraries (`verifier.ts`, `schema.ts`, `extraction-prompt.ts`, `evaluate-extraction.ts`, `nebius-extraction.ts`, `ledger-actions.ts`) are 100% verified locally with 89 automated tests. Zero automated tests make external network calls.
+  - All core libraries (`verifier.ts`, `schema.ts`, `extraction-prompt.ts`, `evaluate-extraction.ts`, `nebius-extraction.ts`, `ledger-actions.ts`, `source-resolver.ts`, `reply-draft.ts`) are 100% verified locally with 103 automated tests. Zero automated tests make external network calls.
 - **Human-Controlled In-Session Workflow:**
   - Sample project data in `SAMPLE_PROJECT` remains default and pristine. User-initiated extractions do not replace sample data unless the user explicitly clicks "Add to Active Ledger".
 
 ---
 
-## 7. Next Steps & Limitations
+## 8. Next Steps & Limitations
 
 1. **Production Evaluation Benchmark:** Run the 12 evaluation scenarios through the live endpoint to measure empirical accuracy metrics for Nemotron-3.5-Lightning.
 2. **Designated Baseline Workflow:** In a future phase, implement an explicit user-designated flow for onboarding an initial contract/agreement as `baseline`.

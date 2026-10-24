@@ -16,6 +16,13 @@
 import { verifyEvidence } from "./verifier.ts";
 import type { AgreementItem, ConversationThread } from "./sample-data.ts";
 import type { CommitmentType, SpeechAct, ApplicationStatus, SuggestedStatus } from "./schema.ts";
+import {
+  resolveItemSource,
+  resolveItemSourceText,
+  type ResolvedItemSource,
+} from "./source-resolver.ts";
+
+export { resolveItemSource, resolveItemSourceText, type ResolvedItemSource };
 
 export interface LedgerTransitionResult<T = AgreementItem> {
   success: boolean;
@@ -45,27 +52,6 @@ export interface LiveCandidateInput {
 
 export interface CreateLiveLedgerItemOptions {
   sourceThreadId?: string;
-}
-
-/**
- * Resolves the authoritative source text for an agreement item.
- * Live extracted items prioritize their directly attached `sourceText`.
- * Sample project items fall back to their matching thread transcript.
- */
-export function resolveItemSourceText(
-  item: AgreementItem,
-  threads?: ConversationThread[]
-): string | undefined {
-  if (typeof item.sourceText === "string" && item.sourceText.length > 0) {
-    return item.sourceText;
-  }
-  if (threads && threads.length > 0) {
-    const thread = threads.find((t) => t.id === item.sourceThreadId);
-    if (thread) {
-      return thread.rawText;
-    }
-  }
-  return undefined;
 }
 
 /**

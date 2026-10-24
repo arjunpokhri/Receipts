@@ -9,6 +9,7 @@ import {
 } from "./icons";
 import type { AgreementItem, ConversationThread } from "@/lib/sample-data";
 import { verifyEvidence } from "@/lib/verifier";
+import { resolveItemSource } from "@/lib/source-resolver";
 import { ExtractedCandidateSchema } from "@/lib/schema";
 
 interface ExecutionTracePanelProps {
@@ -22,8 +23,15 @@ export function ExecutionTracePanel({
 }: ExecutionTracePanelProps) {
   const auditEntries = useMemo(() => {
     return items.map((item) => {
-      const thread = threads.find((t) => t.id === item.sourceThreadId) || threads[0];
-      const verifierRes = verifyEvidence(thread.rawText, item.evidenceQuote);
+      const resolvedSource = resolveItemSource(item, threads);
+      const verifierRes = resolvedSource
+        ? verifyEvidence(resolvedSource.sourceText, item.evidenceQuote)
+        : {
+            verified: false as const,
+            exactMatch: false,
+            reason: "SOURCE_NOT_FOUND" as const,
+            message: "Authoritative source communication could not be resolved for this item.",
+          };
 
       // Validate against Zod schema
       const schemaCheck = ExtractedCandidateSchema.safeParse({
@@ -40,7 +48,7 @@ export function ExecutionTracePanel({
 
       return {
         item,
-        thread,
+        resolvedSource,
         verifierRes,
         schemaValid: schemaCheck.success,
       };
@@ -86,7 +94,7 @@ export function ExecutionTracePanel({
         </div>
 
         <div className="divide-y divide-[#20251F]/8">
-          {auditEntries.map(({ item, thread, verifierRes, schemaValid }, idx) => (
+          {auditEntries.map(({ item, resolvedSource, verifierRes, schemaValid }, idx) => (
             <div key={item.id} className="p-3.5 hover:bg-[#F6F5F0]/50 transition-colors">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
@@ -123,7 +131,9 @@ export function ExecutionTracePanel({
               </div>
 
               <div className="mt-2 border border-[#20251F]/10 bg-[#FAF9F5] p-2 text-xs text-[#576356]">
-                <div className="font-sans font-medium text-[#20251F]">Source Document: {thread.title} ({thread.channel})</div>
+                <div className="font-sans font-medium text-[#20251F]">
+                  Source Document: {resolvedSource ? `${resolvedSource.title} (${resolvedSource.channel})` : "Unresolved Source (Missing)"}
+                </div>
                 <div className="mt-0.5 font-serif italic text-xs text-[#3D473C] leading-relaxed">&ldquo;{item.evidenceQuote}&rdquo;</div>
               </div>
             </div>
