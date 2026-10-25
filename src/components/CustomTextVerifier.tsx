@@ -18,6 +18,11 @@ import { verifyEvidence } from "@/lib/verifier";
 import { MECHANICAL_VERIFICATION_DISCLAIMER } from "@/lib/evaluate-extraction";
 import type { VerifiedExtractedCandidate } from "@/lib/nebius-extraction";
 import type { CommitmentType, SuggestedStatus } from "@/lib/schema";
+import {
+  createSnapshotSession,
+  isSnapshotDiverged,
+  type SourceSnapshotSession,
+} from "@/lib/source-snapshot";
 
 interface ExtractionApiResponse {
   success: boolean;
@@ -49,9 +54,12 @@ export function CustomTextVerifier({ onAddCandidateToLedger }: CustomTextVerifie
 
   // Live Extraction State
   const [isExtracting, setIsExtracting] = useState(false);
-  const [extractionResult, setExtractionResult] = useState<ExtractionApiResponse | null>(null);
+  const [snapshotSession, setSnapshotSession] = useState<SourceSnapshotSession<ExtractionApiResponse> | null>(null);
   const [extractionError, setExtractionError] = useState<string | null>(null);
   const [addedCandidateIds, setAddedCandidateIds] = useState<Set<string>>(new Set());
+
+  const extractionResult = snapshotSession?.result ?? null;
+  const isDiverged = isSnapshotDiverged(snapshotSession, sourceText);
 
   // Manual mechanical verifier computation
   const manualResult = verifyEvidence(sourceText, testQuote, {
@@ -59,11 +67,15 @@ export function CustomTextVerifier({ onAddCandidateToLedger }: CustomTextVerifie
   });
 
   const handleRunLiveExtraction = async () => {
-    if (!sourceText || sourceText.trim().length === 0) {
+    const analyzedSourceText = sourceText.trim();
+    if (!analyzedSourceText) {
       setExtractionError("Please provide source text before running extraction.");
       return;
     }
 
+    // Invalidate stale extraction results immediately upon starting a new extraction
+    setSnapshotSession(null);
+    setAddedCandidateIds(new Set());
     setIsExtracting(true);
     setExtractionError(null);
 
@@ -71,7 +83,7 @@ export function CustomTextVerifier({ onAddCandidateToLedger }: CustomTextVerifie
       const response = await fetch("/api/extract", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sourceText: sourceText.trim() }),
+        body: JSON.stringify({ sourceText: analyzedSourceText }),
       });
 
       const data = await response.json();
@@ -80,7 +92,7 @@ export function CustomTextVerifier({ onAddCandidateToLedger }: CustomTextVerifie
         throw new Error(data.error || `Server extraction failed with status ${response.status}`);
       }
 
-      setExtractionResult(data);
+      setSnapshotSession(createSnapshotSession(analyzedSourceText, data));
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to extract commitments.";
       setExtractionError(message);
@@ -92,12 +104,18 @@ export function CustomTextVerifier({ onAddCandidateToLedger }: CustomTextVerifie
   const handleAddToLedger = (candidate: VerifiedExtractedCandidate) => {
     if (!onAddCandidateToLedger) return;
 
+    if (!snapshotSession) {
+      setExtractionError("Cannot add candidate: no active extraction snapshot session found.");
+      return;
+    }
+
     if (candidate.quoteVerified !== true) {
       setExtractionError("Cannot add candidate: evidence quotation failed mechanical verification.");
       return;
     }
 
-    const res = onAddCandidateToLedger(candidate, sourceText);
+    // Pass the immutable analyzed source snapshot, NEVER the mutable live textarea text
+    const res = onAddCandidateToLedger(candidate, snapshotSession.analyzedSourceText);
     if (res && res.success === false) {
       setExtractionError(res.error || "Failed to add candidate to ledger.");
       return;
@@ -237,6 +255,28 @@ export function CustomTextVerifier({ onAddCandidateToLedger }: CustomTextVerifie
 
       {extractionResult && !isExtracting && (
         <div className="border border-[#20251F]/10 bg-white p-5 shadow-xs space-y-4">
+          {/* Divergence Notice when textarea changes after extraction */}
+          {isDiverged && (
+            <div className="border border-[#C58A36]/40 bg-[#FAF3E8] p-3 text-xs flex flex-wrap items-center justify-between gap-3 text-[#9A6518]">
+              <div className="flex items-start gap-2 max-w-xl">
+                <AlertTriangleIcon className="h-4 w-4 shrink-0 mt-0.5 text-[#C58A36]" />
+                <div>
+                  <span className="font-semibold font-sans">Source Text Modified:</span>{" "}
+                  The textarea content has changed since this extraction was generated. The results below remain bound to the analyzed snapshot and will not reflect your edits until you rerun extraction.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleRunLiveExtraction}
+                disabled={isExtracting || sourceText.trim().length === 0}
+                className="inline-flex items-center gap-1.5 border border-[#9A6518]/30 bg-white px-2.5 py-1 text-xs font-sans font-medium text-[#9A6518] hover:bg-[#FAF3E8] active:translate-x-0.5 active:translate-y-0.5"
+              >
+                <RefreshCwIcon className="h-3 w-3" />
+                <span>Rerun Extraction</span>
+              </button>
+            </div>
+          )}
+
           {/* Summary Bar */}
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#20251F]/10 pb-3">
             <div>

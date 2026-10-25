@@ -22,7 +22,24 @@ import {
   type ResolvedItemSource,
 } from "./source-resolver.ts";
 
-export { resolveItemSource, resolveItemSourceText, type ResolvedItemSource };
+import {
+  captureSourceSnapshot,
+  createSnapshotSession,
+  getSessionSourceText,
+  isSnapshotDiverged,
+  type SourceSnapshotSession,
+} from "./source-snapshot.ts";
+
+export {
+  resolveItemSource,
+  resolveItemSourceText,
+  type ResolvedItemSource,
+  captureSourceSnapshot,
+  createSnapshotSession,
+  getSessionSourceText,
+  isSnapshotDiverged,
+  type SourceSnapshotSession,
+};
 
 export interface LedgerTransitionResult<T = AgreementItem> {
   success: boolean;
