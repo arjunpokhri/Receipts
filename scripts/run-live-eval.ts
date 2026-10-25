@@ -361,6 +361,10 @@ export async function runLiveEvaluation(options: CliOptions): Promise<LiveEvalua
   const summaryFile = path.join(resultsDir, "summary.json");
   fs.writeFileSync(summaryFile, JSON.stringify(summary, null, 2), "utf-8");
   console.log(`\nEvaluation complete. Summary written to ${summaryFile}`);
+  console.log(`  Envelope Validity:         ${classificationRates.envelopeValidity.formatted}`);
+  console.log(`  Candidate Schema Validity: ${classificationRates.candidateSchemaValidity.formatted}`);
+  console.log(`  Quote Existence:           ${classificationRates.quoteExistence.formatted}`);
+  console.log(`  Candidate Recall:          ${classificationRates.candidateRecall.formatted}`);
 
   return summary;
 }

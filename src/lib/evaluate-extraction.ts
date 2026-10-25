@@ -49,17 +49,30 @@ export interface MetricScore {
   passed: number;
   /** Explicit denominator of total items evaluated */
   total: number;
-  /** Percentage passing, rounded to one decimal place (100.0 if total is 0) */
-  percentage: number;
-  /** Explicit formatted fraction with percentage, e.g. '2/2 (100.0%)' */
+  /** Percentage passing, rounded to one decimal place, or null if total is 0 */
+  percentage: number | null;
+  /** Explicit formatted fraction with percentage, e.g. '2/2 (100.0%)' or '0/0 (N/A)' */
   formatted: string;
 }
 
 /**
  * Builds an explicit MetricScore object ensuring denominators are never implicit.
+ * When naOnZero is true and total is 0, percentage is null and formatted is '0/0 (N/A)'.
  */
-export function createMetricScore(passed: number, total: number): MetricScore {
+export function createMetricScore(
+  passed: number,
+  total: number,
+  naOnZero = false
+): MetricScore {
   if (total <= 0) {
+    if (naOnZero) {
+      return {
+        passed: 0,
+        total: 0,
+        percentage: null,
+        formatted: "0/0 (N/A)",
+      };
+    }
     return {
       passed: 0,
       total: 0,
@@ -115,6 +128,8 @@ export interface CaseEvaluationReport {
    */
   mechanicalChecks: {
     disclaimer: string;
+    envelopeValidity?: MetricScore;
+    candidateSchemaValidity?: MetricScore;
     schemaValidity: MetricScore;
     quoteExistence: MetricScore;
   };
@@ -156,6 +171,8 @@ export interface SuiteEvaluationReport {
 
   mechanicalChecks: {
     disclaimer: string;
+    envelopeValidity?: MetricScore;
+    candidateSchemaValidity?: MetricScore;
     schemaValidity: MetricScore;
     quoteExistence: MetricScore;
   };
@@ -275,6 +292,7 @@ export function evaluateExtraction(params: EvaluateExtractionParams): CaseEvalua
     Array.isArray((candidateInput as Record<string, unknown>).candidates)
   ) {
     // Envelope had candidates array, but items or structure failed schema
+    isEnvelopeValid = true;
     rawCandidatesList = (candidateInput as Record<string, unknown>).candidates as unknown[];
     failureReasons.push(
       `Top-level schema issue: ${envelopeParse.error.issues.map((i) => i.message).join(", ")}`
@@ -289,7 +307,6 @@ export function evaluateExtraction(params: EvaluateExtractionParams): CaseEvalua
   const candidateDiagnostics: CandidateDiagnostic[] = [];
   const validParsedCandidates: { candidate: ExtractedCandidate; rawIndex: number }[] = [];
 
-  const schemaDenominator = Math.max(rawCandidatesList.length, expectedCandidates.length, 1);
   let schemaPassedCount = 0;
   let quotePassedCount = 0;
 
@@ -494,9 +511,32 @@ export function evaluateExtraction(params: EvaluateExtractionParams): CaseEvalua
   }
 
   // 5. Compute Final Metric Scores with Explicit Denominators
-  const quoteDenominator = Math.max(rawCandidatesList.length, expectedCandidates.length, 1);
-  const schemaMetric = createMetricScore(schemaPassedCount, schemaDenominator);
-  const quoteMetric = createMetricScore(quotePassedCount, quoteDenominator);
+  const envelopeMetric = createMetricScore(isEnvelopeValid ? 1 : 0, 1);
+
+  // Candidate-level schema validity: measures syntax validity of emitted candidates (N/A if 0 emitted)
+  const candidateSchemaDenominator = rawCandidatesList.length;
+  const candidateSchemaMetric = createMetricScore(
+    schemaPassedCount,
+    candidateSchemaDenominator,
+    true
+  );
+
+  // Quote existence: measures quotes among actually emitted candidates (N/A if 0 emitted)
+  const quoteDenominator = rawCandidatesList.length;
+  const quoteMetric = createMetricScore(quotePassedCount, quoteDenominator, true);
+
+  // Legacy schemaValidity metric for backward-compatibility with tests expecting envelope failure penalties
+  const legacySchemaDenominator =
+    isEnvelopeValid && rawCandidatesList.length === 0
+      ? 0
+      : envelopeParse.success
+      ? rawCandidatesList.length
+      : Math.max(rawCandidatesList.length, expectedCandidates.length, 1);
+  const schemaMetric = createMetricScore(
+    schemaPassedCount,
+    legacySchemaDenominator,
+    isEnvelopeValid && rawCandidatesList.length === 0
+  );
 
   const claimSupportMetric = createMetricScore(claimSupportPassed, expectedTotal);
   const speechActMetric = createMetricScore(speechActPassed, expectedTotal);
@@ -506,7 +546,7 @@ export function evaluateExtraction(params: EvaluateExtractionParams): CaseEvalua
   // 6. Overall Pass/Fail Determination
   const allExpectedMatched = matchedPairs.length === expectedTotal;
   const noExtraneous = extraneousCount === 0;
-  const isSchemaPerfect = isEnvelopeValid && schemaPassedCount === rawCandidatesList.length;
+  const isSchemaPerfect = envelopeParse.success && schemaPassedCount === rawCandidatesList.length;
   const isClassificationAccurate =
     speechActPassed === expectedTotal &&
     suggestedStatusPassed === expectedTotal &&
@@ -525,6 +565,8 @@ export function evaluateExtraction(params: EvaluateExtractionParams): CaseEvalua
     timestamp,
     mechanicalChecks: {
       disclaimer: MECHANICAL_VERIFICATION_DISCLAIMER,
+      envelopeValidity: envelopeMetric,
+      candidateSchemaValidity: candidateSchemaMetric,
       schemaValidity: schemaMetric,
       quoteExistence: quoteMetric,
     },
@@ -574,6 +616,10 @@ export function evaluateScenarioSuite(
   const caseReports: CaseEvaluationReport[] = [];
 
   let passedScenarios = 0;
+  let totalEnvelopePassed = 0;
+  let totalEnvelopeTotal = 0;
+  let totalCandidateSchemaPassed = 0;
+  let totalCandidateSchemaTotal = 0;
   let totalSchemaPassed = 0;
   let totalSchemaTotal = 0;
   let totalQuotePassed = 0;
@@ -598,8 +644,15 @@ export function evaluateScenarioSuite(
     }
 
     // Accumulate mechanical metrics
+    totalEnvelopePassed += report.mechanicalChecks.envelopeValidity?.passed ?? 1;
+    totalEnvelopeTotal += report.mechanicalChecks.envelopeValidity?.total ?? 1;
+
+    totalCandidateSchemaPassed += report.mechanicalChecks.candidateSchemaValidity?.passed ?? report.mechanicalChecks.schemaValidity.passed;
+    totalCandidateSchemaTotal += report.mechanicalChecks.candidateSchemaValidity?.total ?? report.mechanicalChecks.schemaValidity.total;
+
     totalSchemaPassed += report.mechanicalChecks.schemaValidity.passed;
     totalSchemaTotal += report.mechanicalChecks.schemaValidity.total;
+
     totalQuotePassed += report.mechanicalChecks.quoteExistence.passed;
     totalQuoteTotal += report.mechanicalChecks.quoteExistence.total;
 
@@ -624,8 +677,14 @@ export function evaluateScenarioSuite(
     scenarioPassRate: createMetricScore(passedScenarios, scenarios.length),
     mechanicalChecks: {
       disclaimer: MECHANICAL_VERIFICATION_DISCLAIMER,
+      envelopeValidity: createMetricScore(totalEnvelopePassed, totalEnvelopeTotal),
+      candidateSchemaValidity: createMetricScore(
+        totalCandidateSchemaPassed,
+        totalCandidateSchemaTotal,
+        true
+      ),
       schemaValidity: createMetricScore(totalSchemaPassed, totalSchemaTotal),
-      quoteExistence: createMetricScore(totalQuotePassed, totalQuoteTotal),
+      quoteExistence: createMetricScore(totalQuotePassed, totalQuoteTotal, true),
     },
     groundTruthAlignment: {
       claimSupport: createMetricScore(totalClaimSupportPassed, totalClaimSupportTotal),

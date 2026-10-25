@@ -167,24 +167,33 @@ export function computeStatusDiscrepancies(
 }
 
 export interface ClassificationRatesSummary {
+  envelopeValidity: StrictMetricRate;
+  candidateSchemaValidity: StrictMetricRate;
   schemaValidity: StrictMetricRate;
   quoteExistence: StrictMetricRate;
+  candidateRecall: StrictMetricRate;
   speechActAccuracy: StrictMetricRate;
   statusAccuracy: StrictMetricRate;
   commitmentTypeAccuracy: StrictMetricRate;
 }
 
 /**
- * Computes rates for schema validity, quote existence, and classification accuracies
- * across a collection of CaseEvaluationReports.
+ * Computes rates for envelope validity, candidate schema validity, quote existence,
+ * candidate recall, and classification accuracies across a collection of CaseEvaluationReports.
  */
 export function computeClassificationRates(
   reports: CaseEvaluationReport[]
 ): ClassificationRatesSummary {
+  let envelopePassed = 0;
+  let envelopeTotal = 0;
+  let candidateSchemaPassed = 0;
+  let candidateSchemaTotal = 0;
   let schemaPassed = 0;
   let schemaTotal = 0;
   let quotePassed = 0;
   let quoteTotal = 0;
+  let candidatesMatched = 0;
+  let candidatesExpected = 0;
   let speechActPassed = 0;
   let speechActTotal = 0;
   let statusPassed = 0;
@@ -193,11 +202,31 @@ export function computeClassificationRates(
   let commitmentTypeTotal = 0;
 
   for (const report of reports) {
+    if (report.mechanicalChecks.envelopeValidity) {
+      envelopePassed += report.mechanicalChecks.envelopeValidity.passed;
+      envelopeTotal += report.mechanicalChecks.envelopeValidity.total;
+    } else {
+      // Default for legacy mock test objects omitting envelopeValidity
+      envelopePassed += 1;
+      envelopeTotal += 1;
+    }
+
+    if (report.mechanicalChecks.candidateSchemaValidity) {
+      candidateSchemaPassed += report.mechanicalChecks.candidateSchemaValidity.passed;
+      candidateSchemaTotal += report.mechanicalChecks.candidateSchemaValidity.total;
+    } else {
+      candidateSchemaPassed += report.mechanicalChecks.schemaValidity.passed;
+      candidateSchemaTotal += report.mechanicalChecks.schemaValidity.total;
+    }
+
     schemaPassed += report.mechanicalChecks.schemaValidity.passed;
     schemaTotal += report.mechanicalChecks.schemaValidity.total;
 
     quotePassed += report.mechanicalChecks.quoteExistence.passed;
     quoteTotal += report.mechanicalChecks.quoteExistence.total;
+
+    candidatesMatched += report.summary.candidatesMatched;
+    candidatesExpected += report.summary.candidatesExpected;
 
     speechActPassed += report.groundTruthAlignment.speechActClassification.passed;
     speechActTotal += report.groundTruthAlignment.speechActClassification.total;
@@ -210,8 +239,14 @@ export function computeClassificationRates(
   }
 
   return {
-    schemaValidity: createStrictMetricRate(schemaPassed, schemaTotal),
+    envelopeValidity: createStrictMetricRate(envelopePassed, envelopeTotal),
+    candidateSchemaValidity: createStrictMetricRate(candidateSchemaPassed, candidateSchemaTotal),
+    schemaValidity: createStrictMetricRate(
+      candidateSchemaTotal > 0 || schemaTotal === 0 ? candidateSchemaPassed : schemaPassed,
+      candidateSchemaTotal > 0 || schemaTotal === 0 ? candidateSchemaTotal : schemaTotal
+    ),
     quoteExistence: createStrictMetricRate(quotePassed, quoteTotal),
+    candidateRecall: createStrictMetricRate(candidatesMatched, candidatesExpected),
     speechActAccuracy: createStrictMetricRate(speechActPassed, speechActTotal),
     statusAccuracy: createStrictMetricRate(statusPassed, statusTotal),
     commitmentTypeAccuracy: createStrictMetricRate(commitmentTypePassed, commitmentTypeTotal),

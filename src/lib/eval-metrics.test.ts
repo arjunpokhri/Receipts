@@ -346,6 +346,132 @@ describe("Measured Reliability v1 Pure Evaluation Metrics", () => {
       assert.equal(rates.commitmentTypeAccuracy.passed, 3);
       assert.equal(rates.commitmentTypeAccuracy.total, 4);
     });
+
+    it("keeps envelope validity, candidate-level validity, and candidate recall distinct for empty responses", () => {
+      // Simulates Case 13 live run where response is {"candidates":[]}
+      const emptyReport: CaseEvaluationReport = {
+        scenarioId: "case-13-conditional-budget-proposal",
+        timestamp: "2026-10-25T12:00:00Z",
+        mechanicalChecks: {
+          disclaimer: "test",
+          envelopeValidity: { passed: 1, total: 1, percentage: 100, formatted: "1/1 (100.0%)" },
+          candidateSchemaValidity: { passed: 0, total: 0, percentage: null, formatted: "0/0 (N/A)" },
+          schemaValidity: { passed: 0, total: 0, percentage: null, formatted: "0/0 (N/A)" },
+          quoteExistence: { passed: 0, total: 0, percentage: null, formatted: "0/0 (N/A)" },
+        },
+        groundTruthAlignment: {
+          claimSupport: { passed: 0, total: 1, percentage: 0, formatted: "0/1 (0.0%)" },
+          speechActClassification: { passed: 0, total: 1, percentage: 0, formatted: "0/1 (0.0%)" },
+          suggestedStatusClassification: { passed: 0, total: 1, percentage: 0, formatted: "0/1 (0.0%)" },
+          commitmentTypeClassification: { passed: 0, total: 1, percentage: 0, formatted: "0/1 (0.0%)" },
+        },
+        summary: {
+          passed: false,
+          failureReasons: ["Missing expected candidate"],
+          candidatesExpected: 1,
+          candidatesExtracted: 0,
+          candidatesMatched: 0,
+          candidatesMissing: 1,
+          candidatesExtraneous: 0,
+        },
+        candidateDiagnostics: [],
+      };
+
+      const rates = computeClassificationRates([emptyReport]);
+
+      // Envelope is 100% valid
+      assert.equal(rates.envelopeValidity.passed, 1);
+      assert.equal(rates.envelopeValidity.total, 1);
+      assert.equal(rates.envelopeValidity.percentage, 100.0);
+      assert.equal(rates.envelopeValidity.formatted, "1/1 (100.0%)");
+
+      // Candidate-level schema & quote existence are explicitly N/A (0/0) with null percentage
+      assert.equal(rates.candidateSchemaValidity.passed, 0);
+      assert.equal(rates.candidateSchemaValidity.total, 0);
+      assert.equal(rates.candidateSchemaValidity.percentage, null);
+      assert.equal(rates.candidateSchemaValidity.formatted, "0/0 (N/A)");
+
+      assert.equal(rates.quoteExistence.passed, 0);
+      assert.equal(rates.quoteExistence.total, 0);
+      assert.equal(rates.quoteExistence.percentage, null);
+      assert.equal(rates.quoteExistence.formatted, "0/0 (N/A)");
+
+      // Candidate recall correctly records the coverage deficit: 0/1 (0.0%)
+      assert.equal(rates.candidateRecall.passed, 0);
+      assert.equal(rates.candidateRecall.total, 1);
+      assert.equal(rates.candidateRecall.percentage, 0.0);
+      assert.equal(rates.candidateRecall.formatted, "0/1 (0.0%)");
+    });
+
+    it("aggregates mixed suite separating emitted candidate quality from extraction coverage", () => {
+      // Report 1: extracted 2 candidates, both schema and quote valid, 2 expected
+      const reportValid: CaseEvaluationReport = {
+        scenarioId: "case-1",
+        timestamp: "2026-10-25T12:00:00Z",
+        mechanicalChecks: {
+          disclaimer: "test",
+          envelopeValidity: { passed: 1, total: 1, percentage: 100, formatted: "1/1 (100.0%)" },
+          candidateSchemaValidity: { passed: 2, total: 2, percentage: 100, formatted: "2/2 (100.0%)" },
+          schemaValidity: { passed: 2, total: 2, percentage: 100, formatted: "2/2 (100.0%)" },
+          quoteExistence: { passed: 2, total: 2, percentage: 100, formatted: "2/2 (100.0%)" },
+        },
+        groundTruthAlignment: {
+          claimSupport: { passed: 2, total: 2, percentage: 100, formatted: "2/2 (100.0%)" },
+          speechActClassification: { passed: 2, total: 2, percentage: 100, formatted: "2/2 (100.0%)" },
+          suggestedStatusClassification: { passed: 2, total: 2, percentage: 100, formatted: "2/2 (100.0%)" },
+          commitmentTypeClassification: { passed: 2, total: 2, percentage: 100, formatted: "2/2 (100.0%)" },
+        },
+        summary: {
+          passed: true,
+          failureReasons: [],
+          candidatesExpected: 2,
+          candidatesExtracted: 2,
+          candidatesMatched: 2,
+          candidatesMissing: 0,
+          candidatesExtraneous: 0,
+        },
+        candidateDiagnostics: [],
+      };
+
+      // Report 2: empty extraction for a 1-candidate expected scenario
+      const reportEmpty: CaseEvaluationReport = {
+        scenarioId: "case-13",
+        timestamp: "2026-10-25T12:00:00Z",
+        mechanicalChecks: {
+          disclaimer: "test",
+          envelopeValidity: { passed: 1, total: 1, percentage: 100, formatted: "1/1 (100.0%)" },
+          candidateSchemaValidity: { passed: 0, total: 0, percentage: null, formatted: "0/0 (N/A)" },
+          schemaValidity: { passed: 0, total: 0, percentage: null, formatted: "0/0 (N/A)" },
+          quoteExistence: { passed: 0, total: 0, percentage: null, formatted: "0/0 (N/A)" },
+        },
+        groundTruthAlignment: {
+          claimSupport: { passed: 0, total: 1, percentage: 0, formatted: "0/1 (0.0%)" },
+          speechActClassification: { passed: 0, total: 1, percentage: 0, formatted: "0/1 (0.0%)" },
+          suggestedStatusClassification: { passed: 0, total: 1, percentage: 0, formatted: "0/1 (0.0%)" },
+          commitmentTypeClassification: { passed: 0, total: 1, percentage: 0, formatted: "0/1 (0.0%)" },
+        },
+        summary: {
+          passed: false,
+          failureReasons: ["Missing expected candidate"],
+          candidatesExpected: 1,
+          candidatesExtracted: 0,
+          candidatesMatched: 0,
+          candidatesMissing: 1,
+          candidatesExtraneous: 0,
+        },
+        candidateDiagnostics: [],
+      };
+
+      const rates = computeClassificationRates([reportValid, reportEmpty]);
+
+      // Both envelopes valid
+      assert.equal(rates.envelopeValidity.formatted, "2/2 (100.0%)");
+      // Emitted candidate quality is not penalized by empty response
+      assert.equal(rates.candidateSchemaValidity.formatted, "2/2 (100.0%)");
+      assert.equal(rates.quoteExistence.formatted, "2/2 (100.0%)");
+      // Recall accurately penalizes missing candidate: 2 matched out of 3 expected
+      assert.equal(rates.candidateRecall.formatted, "2/3 (66.7%)");
+    });
   });
 
   describe("Failure Stage Breakdown", () => {

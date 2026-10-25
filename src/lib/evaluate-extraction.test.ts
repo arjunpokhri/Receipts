@@ -243,6 +243,70 @@ describe("Offline Extraction Evaluation Engine", () => {
     });
   });
 
+  describe("Envelope Validity vs Candidate-Level Validity Semantics", () => {
+    const case13 = EVALUATION_SCENARIOS.find((s) => s.id === "case-13-conditional-budget-proposal")!;
+
+    it("evaluates valid empty JSON output: valid envelope, N/A candidate schema/quote, penalized recall", () => {
+      // Model returned valid empty candidates envelope: {"candidates":[]}
+      const report = evaluateScenario(case13, { candidates: [] });
+
+      // Envelope must be strictly valid
+      assert.ok(report.mechanicalChecks.envelopeValidity);
+      assert.equal(report.mechanicalChecks.envelopeValidity.passed, 1);
+      assert.equal(report.mechanicalChecks.envelopeValidity.total, 1);
+      assert.equal(report.mechanicalChecks.envelopeValidity.formatted, "1/1 (100.0%)");
+
+      // Candidate-level schema and quote checks must be explicitly N/A (0/0) with null percentage
+      assert.ok(report.mechanicalChecks.candidateSchemaValidity);
+      assert.equal(report.mechanicalChecks.candidateSchemaValidity.passed, 0);
+      assert.equal(report.mechanicalChecks.candidateSchemaValidity.total, 0);
+      assert.equal(report.mechanicalChecks.candidateSchemaValidity.percentage, null);
+      assert.equal(report.mechanicalChecks.candidateSchemaValidity.formatted, "0/0 (N/A)");
+
+      assert.equal(report.mechanicalChecks.quoteExistence.passed, 0);
+      assert.equal(report.mechanicalChecks.quoteExistence.total, 0);
+      assert.equal(report.mechanicalChecks.quoteExistence.percentage, null);
+      assert.equal(report.mechanicalChecks.quoteExistence.formatted, "0/0 (N/A)");
+
+      // Candidate coverage failure must fail the scenario
+      assert.equal(report.summary.passed, false);
+      assert.equal(report.summary.candidatesExpected, 1);
+      assert.equal(report.summary.candidatesExtracted, 0);
+      assert.equal(report.summary.candidatesMatched, 0);
+      assert.equal(report.summary.candidatesMissing, 1);
+      assert.ok(
+        report.summary.failureReasons.some((r) => r.includes("Missing expected candidate"))
+      );
+
+      // Classification metrics must record the missing candidate as 0/1 (0.0%)
+      assert.equal(report.groundTruthAlignment.claimSupport.formatted, "0/1 (0.0%)");
+      assert.equal(report.groundTruthAlignment.speechActClassification.formatted, "0/1 (0.0%)");
+      assert.equal(report.groundTruthAlignment.suggestedStatusClassification.formatted, "0/1 (0.0%)");
+      assert.equal(report.groundTruthAlignment.commitmentTypeClassification.formatted, "0/1 (0.0%)");
+    });
+
+    it("evaluates non-object / malformed envelope as invalid envelope", () => {
+      const report = evaluateScenario(case13, "malformed response");
+
+      assert.ok(report.mechanicalChecks.envelopeValidity);
+      assert.equal(report.mechanicalChecks.envelopeValidity.passed, 0);
+      assert.equal(report.mechanicalChecks.envelopeValidity.total, 1);
+      assert.equal(report.mechanicalChecks.envelopeValidity.formatted, "0/1 (0.0%)");
+      assert.equal(report.summary.passed, false);
+      assert.ok(
+        report.summary.failureReasons.some((r) => r.includes("Malformed output"))
+      );
+    });
+
+    it("supports naOnZero flag in createMetricScore", () => {
+      const naScore = createMetricScore(0, 0, true);
+      assert.equal(naScore.passed, 0);
+      assert.equal(naScore.total, 0);
+      assert.equal(naScore.percentage, null);
+      assert.equal(naScore.formatted, "0/0 (N/A)");
+    });
+  });
+
   describe("Mechanical Verification vs. Claim Truth Separation", () => {
     it("does not consider a verified quotation as proof of claim support if the claim is false", () => {
       // In this test, the quote exists verbatim in sourceText ("We look forward to getting started."),
