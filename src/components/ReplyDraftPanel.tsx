@@ -8,7 +8,7 @@ import {
   RefreshCwIcon,
 } from "./icons";
 import type { AgreementItem, ProjectData } from "@/lib/sample-data";
-import { generateReplyDraft } from "@/lib/reply-draft";
+import { generateReplyDraft, getStatusLabel } from "@/lib/reply-draft";
 
 interface ReplyDraftPanelProps {
   project: ProjectData;
@@ -45,9 +45,10 @@ export function ReplyDraftPanel({
     : null;
 
   const itemKey = currentItem?.id ?? "__none";
+  const isDismissed = currentItem?.status === "dismissed";
 
   const defaultDraft = currentItem ? generateReplyDraft(currentItem, project) : "";
-  const draftContent = userEdits[itemKey] ?? defaultDraft;
+  const draftContent = isDismissed ? "" : (userEdits[itemKey] ?? defaultDraft);
 
   const handleCopy = () => {
     if (!draftContent.trim()) return;
@@ -58,7 +59,7 @@ export function ReplyDraftPanel({
   };
 
   const handleResetDraft = () => {
-    if (!currentItem) return;
+    if (!currentItem || isDismissed) return;
     setUserEdits((prev) => {
       const next = { ...prev };
       delete next[itemKey];
@@ -67,6 +68,7 @@ export function ReplyDraftPanel({
   };
 
   const handleChangeText = (value: string) => {
+    if (isDismissed) return;
     setUserEdits((prev) => ({
       ...prev,
       [itemKey]: value,
@@ -96,9 +98,9 @@ export function ReplyDraftPanel({
             <button
               type="button"
               onClick={handleResetDraft}
-              disabled={!currentItem}
+              disabled={!currentItem || isDismissed}
               className={`brutal-btn-outline inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-[#576356] ${
-                !currentItem ? "opacity-50 cursor-not-allowed" : ""
+                !currentItem || isDismissed ? "opacity-50 cursor-not-allowed" : ""
               }`}
               title="Reset to default template"
             >
@@ -108,9 +110,9 @@ export function ReplyDraftPanel({
             <button
               type="button"
               onClick={handleCopy}
-              disabled={!draftContent.trim()}
+              disabled={!draftContent.trim() || isDismissed}
               className={`brutal-btn-primary inline-flex items-center gap-1.5 px-4 py-1.5 text-xs ${
-                !draftContent.trim() ? "opacity-50 cursor-not-allowed" : ""
+                !draftContent.trim() || isDismissed ? "opacity-50 cursor-not-allowed" : ""
               }`}
             >
               {copied ? (
@@ -155,19 +157,27 @@ export function ReplyDraftPanel({
       {/* Editor Body */}
       <div className="p-4 sm:p-5">
         {currentItem ? (
-          <div className="mb-3.5 border border-[#E8CA97] bg-[#FAF3E8]/60 p-3 text-xs">
-            <div className="flex items-center justify-between text-xs font-sans text-[#9A6518]">
-              <span className="font-medium">
-                Referencing Evidence ({currentItem.status === "baseline" ? "Baseline Agreement" : "Discussed / Pending"}):
-              </span>
-              <span>
-                Speaker: <strong className="text-[#20251F] font-medium">{currentItem.speaker || "Not specified"}</strong>
-              </span>
+          <>
+            <div className="mb-3.5 border border-[#E8CA97] bg-[#FAF3E8]/60 p-3 text-xs">
+              <div className="flex items-center justify-between text-xs font-sans text-[#9A6518]">
+                <span className="font-medium">
+                  Referencing Evidence ({getStatusLabel(currentItem.status)}):
+                </span>
+                <span>
+                  Speaker: <strong className="text-[#20251F] font-medium">{currentItem.speaker || "Not specified"}</strong>
+                </span>
+              </div>
+              <p className="mt-1 font-serif italic text-xs text-[#20251F] leading-relaxed">
+                “{currentItem.evidenceQuote || "[No quotation available]"}”
+              </p>
             </div>
-            <p className="mt-1 font-serif italic text-xs text-[#20251F] leading-relaxed">
-              “{currentItem.evidenceQuote || "[No quotation available]"}”
-            </p>
-          </div>
+
+            {isDismissed && (
+              <div className="mb-3.5 border border-[#20251F]/15 bg-[#FAF3E8]/40 p-3.5 text-xs text-[#576356]">
+                <span className="font-semibold text-[#20251F]">Dismissed item:</span> Dismissed items have no draft and must be restored first.
+              </div>
+            )}
+          </>
         ) : (
           <div className="mb-3.5 border border-dashed border-[#20251F]/20 bg-[#F6F5F0]/60 p-6 text-center">
             <p className="text-sm font-medium text-[#20251F]">No Agreement Item Selected</p>
@@ -182,12 +192,14 @@ export function ReplyDraftPanel({
             rows={11}
             value={draftContent}
             onChange={(e) => handleChangeText(e.target.value)}
-            disabled={!currentItem}
+            disabled={!currentItem || isDismissed}
             className={`w-full border border-[#20251F]/15 bg-white p-3.5 font-sans text-xs text-[#20251F] leading-relaxed focus:border-[#244D3A] focus:outline-hidden ${
-              !currentItem ? "bg-[#F6F5F0]/30 text-[#889386] cursor-not-allowed" : ""
+              !currentItem || isDismissed ? "bg-[#F6F5F0]/30 text-[#889386] cursor-not-allowed" : ""
             }`}
             placeholder={
-              currentItem
+              isDismissed
+                ? "Dismissed items have no draft and must be restored first."
+                : currentItem
                 ? "Type or edit clarification message..."
                 : "No item selected. Select an agreement item to generate a clarification message."
             }
