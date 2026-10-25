@@ -38,17 +38,19 @@ export function ReplyDraftPanel({
 
   const resolvedActiveId =
     activeItemIdOverride ??
-    (selectedItem && (selectedItem.status === "proposed" || selectedItem.status === "unclear")
-      ? selectedItem.id
-      : pendingItems[0]?.id ?? "");
+    (selectedItem ? selectedItem.id : null);
 
-  const currentItem = pendingItems.find((i) => i.id === resolvedActiveId) ?? pendingItems[0];
-  const itemKey = currentItem?.id ?? "__default";
+  const currentItem = resolvedActiveId
+    ? items.find((i) => i.id === resolvedActiveId) ?? null
+    : null;
 
-  const defaultDraft = generateReplyDraft(currentItem, project);
+  const itemKey = currentItem?.id ?? "__none";
+
+  const defaultDraft = currentItem ? generateReplyDraft(currentItem, project) : "";
   const draftContent = userEdits[itemKey] ?? defaultDraft;
 
   const handleCopy = () => {
+    if (!draftContent.trim()) return;
     navigator.clipboard.writeText(draftContent).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -56,6 +58,7 @@ export function ReplyDraftPanel({
   };
 
   const handleResetDraft = () => {
+    if (!currentItem) return;
     setUserEdits((prev) => {
       const next = { ...prev };
       delete next[itemKey];
@@ -93,7 +96,10 @@ export function ReplyDraftPanel({
             <button
               type="button"
               onClick={handleResetDraft}
-              className="brutal-btn-outline inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-[#576356]"
+              disabled={!currentItem}
+              className={`brutal-btn-outline inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-[#576356] ${
+                !currentItem ? "opacity-50 cursor-not-allowed" : ""
+              }`}
               title="Reset to default template"
             >
               <RefreshCwIcon className="h-3.5 w-3.5" />
@@ -102,7 +108,10 @@ export function ReplyDraftPanel({
             <button
               type="button"
               onClick={handleCopy}
-              className="brutal-btn-primary inline-flex items-center gap-1.5 px-4 py-1.5 text-xs"
+              disabled={!draftContent.trim()}
+              className={`brutal-btn-primary inline-flex items-center gap-1.5 px-4 py-1.5 text-xs ${
+                !draftContent.trim() ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
               {copied ? (
                 <>
@@ -123,7 +132,7 @@ export function ReplyDraftPanel({
         {pendingItems.length > 0 && (
           <div className="mt-3.5 flex flex-wrap items-center gap-2 pt-2 border-t border-[#20251F]/8">
             <span className="text-xs font-sans font-medium text-[#889386]">
-              Scope Item:
+              Quick Select Pending:
             </span>
             {pendingItems.map((item) => (
               <button
@@ -145,14 +154,25 @@ export function ReplyDraftPanel({
 
       {/* Editor Body */}
       <div className="p-4 sm:p-5">
-        {currentItem && (
+        {currentItem ? (
           <div className="mb-3.5 border border-[#E8CA97] bg-[#FAF3E8]/60 p-3 text-xs">
             <div className="flex items-center justify-between text-xs font-sans text-[#9A6518]">
-              <span className="font-medium">Referencing Evidence:</span>
-              <span>Speaker: <strong className="text-[#20251F] font-medium">{currentItem.speaker}</strong></span>
+              <span className="font-medium">
+                Referencing Evidence ({currentItem.status === "baseline" ? "Baseline Agreement" : "Discussed / Pending"}):
+              </span>
+              <span>
+                Speaker: <strong className="text-[#20251F] font-medium">{currentItem.speaker || "Not specified"}</strong>
+              </span>
             </div>
             <p className="mt-1 font-serif italic text-xs text-[#20251F] leading-relaxed">
-              “{currentItem.evidenceQuote}”
+              “{currentItem.evidenceQuote || "[No quotation available]"}”
+            </p>
+          </div>
+        ) : (
+          <div className="mb-3.5 border border-dashed border-[#20251F]/20 bg-[#F6F5F0]/60 p-6 text-center">
+            <p className="text-sm font-medium text-[#20251F]">No Agreement Item Selected</p>
+            <p className="mt-1 text-xs text-[#576356]">
+              Select an agreement item from the ledger or choose a pending item above to generate a clarification reply draft.
             </p>
           </div>
         )}
@@ -162,15 +182,22 @@ export function ReplyDraftPanel({
             rows={11}
             value={draftContent}
             onChange={(e) => handleChangeText(e.target.value)}
-            className="w-full border border-[#20251F]/15 bg-white p-3.5 font-sans text-xs text-[#20251F] leading-relaxed focus:border-[#244D3A] focus:outline-hidden"
-            placeholder="Type clarification message..."
+            disabled={!currentItem}
+            className={`w-full border border-[#20251F]/15 bg-white p-3.5 font-sans text-xs text-[#20251F] leading-relaxed focus:border-[#244D3A] focus:outline-hidden ${
+              !currentItem ? "bg-[#F6F5F0]/30 text-[#889386] cursor-not-allowed" : ""
+            }`}
+            placeholder={
+              currentItem
+                ? "Type or edit clarification message..."
+                : "No item selected. Select an agreement item to generate a clarification message."
+            }
           />
         </div>
 
         {/* Editor Footer */}
         <div className="mt-2.5 flex flex-wrap items-center justify-between text-xs text-[#889386]">
           <span>{draftContent.length} characters • {draftContent.split(/\s+/).filter(Boolean).length} words</span>
-          <span>Editable text buffer. Does not auto-send to client.</span>
+          <span>Editable text buffer. Never sent automatically to client.</span>
         </div>
       </div>
     </div>
