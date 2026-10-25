@@ -40,6 +40,11 @@ export interface NebiusExtractionResult {
   rejectedQuoteCount: number;
   model: string;
   durationMs: number;
+  usage?: {
+    promptTokens?: number;
+    completionTokens?: number;
+    totalTokens?: number;
+  };
 }
 
 export interface ExtractCommitmentsOptions extends ExtractionPromptOptions {
@@ -57,6 +62,8 @@ export interface ExtractCommitmentsOptions extends ExtractionPromptOptions {
   maxTokens?: number;
   /** Whether to enable thinking traces if supported by backend (defaults to false for structured JSON stability) */
   enableThinking?: boolean;
+  /** Optional callback receiving raw model content before parsing or schema validation */
+  onRawContent?: (raw: string) => void;
 }
 
 /**
@@ -186,6 +193,11 @@ export async function extractCommitmentsWithNebius(
     throw new Error("Model returned an empty content response.");
   }
 
+  // Call onRawContent with raw model content before parsing or validation
+  if (options.onRawContent) {
+    options.onRawContent(rawContent);
+  }
+
   // 7. Parse JSON safely
   const jsonString = extractCleanJsonString(rawContent);
   let parsedPayload: unknown;
@@ -237,5 +249,12 @@ export async function extractCommitmentsWithNebius(
     rejectedQuoteCount: rejectedCount,
     model: response.model || model,
     durationMs,
+    usage: response.usage
+      ? {
+          promptTokens: response.usage.prompt_tokens,
+          completionTokens: response.usage.completion_tokens,
+          totalTokens: response.usage.total_tokens,
+        }
+      : undefined,
   };
 }

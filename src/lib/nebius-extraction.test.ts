@@ -407,5 +407,118 @@ describe("Nebius Extraction Engine", () => {
         }
       );
     });
+
+    it("invokes onRawContent with raw model output before parsing and captures token usage", async () => {
+      const rawPayload = JSON.stringify({
+        candidates: [
+          {
+            claim: "Deliverables include 3 wireframes",
+            evidenceQuote: "agreed on 3 wireframes",
+            speaker: "Elena",
+            timestamp: "Kickoff",
+            commitmentType: "deliverables",
+            speechAct: "commitment",
+            suggestedStatus: "proposed",
+            confidence: "high",
+            explanation: "Agreed scope",
+          },
+        ],
+      });
+
+      let capturedRaw: string | null = null;
+      const mockClient = {
+        chat: {
+          completions: {
+            create: async () => ({
+              id: "mock-usage-1",
+              model: "nvidia/Nemotron-3_5-Lightning",
+              choices: [
+                {
+                  finish_reason: "stop",
+                  message: {
+                    role: "assistant",
+                    content: rawPayload,
+                  },
+                },
+              ],
+              usage: {
+                prompt_tokens: 150,
+                completion_tokens: 65,
+                total_tokens: 215,
+              },
+            }),
+          },
+        },
+      } as unknown as OpenAI;
+
+      const result = await extractCommitmentsWithNebius(sampleSource, {
+        client: mockClient,
+        onRawContent: (raw) => {
+          capturedRaw = raw;
+        },
+      });
+
+      assert.equal(capturedRaw, rawPayload);
+      assert.equal(result.candidates.length, 1);
+      assert.deepEqual(result.usage, {
+        promptTokens: 150,
+        completionTokens: 65,
+        totalTokens: 215,
+      });
+    });
+
+    it("invokes onRawContent even when schema validation subsequently throws", async () => {
+      const invalidSchemaPayload = JSON.stringify({
+        candidates: [
+          {
+            claim: "Unlawful status attempt",
+            evidenceQuote: "agreed on 3 wireframes",
+            speaker: "Elena",
+            timestamp: "Kickoff",
+            commitmentType: "deliverables",
+            speechAct: "commitment",
+            suggestedStatus: "confirmed", // Forbidden terminal status!
+            confidence: "high",
+            explanation: "Invalid status",
+          },
+        ],
+      });
+
+      let capturedRaw: string | null = null;
+      const mockClient = {
+        chat: {
+          completions: {
+            create: async () => ({
+              id: "mock-invalid-schema",
+              choices: [
+                {
+                  finish_reason: "stop",
+                  message: {
+                    role: "assistant",
+                    content: invalidSchemaPayload,
+                  },
+                },
+              ],
+            }),
+          },
+        },
+      } as unknown as OpenAI;
+
+      await assert.rejects(
+        async () => {
+          await extractCommitmentsWithNebius(sampleSource, {
+            client: mockClient,
+            onRawContent: (raw) => {
+              capturedRaw = raw;
+            },
+          });
+        },
+        {
+          message: /violated schema constraints/,
+        }
+      );
+
+      assert.equal(capturedRaw, invalidSchemaPayload);
+    });
   });
 });

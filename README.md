@@ -86,3 +86,34 @@ npm run build
 - [DESIGN.md](file:///d:/New%20folder/DESIGN.md): Visual direction, panel layout, and semantic evidence states.
 - [DECISIONS.md](file:///d:/New%20folder/DECISIONS.md): Architectural decisions and open questions.
 - [STATUS.md](file:///d:/New%20folder/STATUS.md): Current implementation progress and next milestones.
+
+---
+
+## 6. Model Evaluation (Measured Reliability v1)
+
+The repository provides a repeatable evaluation harness (`eval:live`) for testing extraction performance against the Nebius Token Factory (`nvidia/Nemotron-3_5-Lightning`).
+
+### Running the Evaluation
+- **No-network preview (safe, 0 API calls):**
+  ```bash
+  npm run eval:live
+  ```
+- **Live evaluation (consumes Nebius credits; requires `NEBIUS_API_KEY`):**
+  ```bash
+  npm run eval:live -- --yes
+  ```
+- **Target a specific scenario or run count:**
+  ```bash
+  npm run eval:live -- --yes --runs 1 --only case-01-clear-baseline-scope
+  ```
+
+### Evaluation Results
+*Live evaluation results will be published here after executing the evaluation harness with active Nebius credentials. Results are saved to `eval-results/summary.json` with per-run raw outputs stored in `eval-results/raw/`.*
+
+The evaluation measures:
+- **Exact-match classification accuracy** (speech act, suggested status, commitment type)
+- **Mechanical verification** (schema validity, quote existence)
+- **Overstatement rate & confidently wrong count** (model proposing baseline or asserting higher status)
+- **Whole-response failures & failure-stage breakdown** (network, truncation, parsing, schema violation)
+- **Latency distribution** (p50, p95) and token accounting
+- **Run-to-run status instability** (measuring agreement variance across multiple runs per scenario)

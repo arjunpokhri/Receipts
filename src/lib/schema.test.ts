@@ -123,11 +123,11 @@ describe("Extraction Schema & Candidate Validation", () => {
 });
 
 describe("Evaluation Scenarios Suite Verification", () => {
-  it("contains exactly 12 comprehensive scenarios", () => {
-    assert.equal(EVALUATION_SCENARIOS.length, 12);
+  it("contains exactly 17 comprehensive scenarios", () => {
+    assert.equal(EVALUATION_SCENARIOS.length, 17);
   });
 
-  it("verifies that all expected candidates across all 12 scenarios adhere strictly to ExtractedCandidateSchema", () => {
+  it("verifies that all expected candidates across all 17 scenarios adhere strictly to ExtractedCandidateSchema", () => {
     for (const scenario of EVALUATION_SCENARIOS) {
       assert.ok(scenario.id, `Scenario missing ID`);
       assert.ok(scenario.title, `Scenario ${scenario.id} missing title`);
