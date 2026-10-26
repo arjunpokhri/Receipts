@@ -152,6 +152,44 @@ describe("Extraction Prompt Builder & Guardrails", () => {
       );
     });
 
+    it("separates speech act acceptance from uncertain stakeholder authority and tags as unclear", () => {
+      assert.ok(
+        EXTRACTION_SYSTEM_PROMPT.includes("Classify the speech act as \"acceptance\" whenever a speaker explicitly accepts a term or authorizes work to begin, even if the speaker's authority to bind the client is unverified or questionable"),
+        "System prompt must classify explicit authorization as acceptance regardless of authority"
+      );
+      assert.ok(
+        EXTRACTION_SYSTEM_PROMPT.includes("Separate the communicative speech act from authorization and status"),
+        "System prompt must explicitly separate speech act from authorization and status"
+      );
+      assert.ok(
+        EXTRACTION_SYSTEM_PROMPT.includes("When a speaker explicitly accepts a term or authorizes work to begin, but the source indicates their authority to bind the client is uncertain (e.g. an intern or junior stakeholder with no confirmed approval authority)"),
+        "System prompt must address uncertain stakeholder authority"
+      );
+      assert.ok(
+        EXTRACTION_SYSTEM_PROMPT.includes("retain speech act \"acceptance\" but set suggestedStatus to \"unclear\""),
+        "System prompt must assign unclear status to unverified authority acceptance"
+      );
+      assert.ok(
+        EXTRACTION_SYSTEM_PROMPT.includes("Do NOT change this to \"proposed\" merely because formal authority is unverified, and never promote it to \"baseline\" or \"confirmed\""),
+        "System prompt must guard against marking unverified acceptance as proposed, baseline, or confirmed"
+      );
+    });
+
+    it("clarifies commitment type classification based on the primary term", () => {
+      assert.ok(
+        EXTRACTION_SYSTEM_PROMPT.includes("When the principal subject is a specific work product or scope change and a price is mentioned as an attribute of that item (e.g. \"mobile nav update at $750\"), classify the candidate as \"deliverables\" if the candidate's primary term is the work product"),
+        "System prompt must classify deliverables with price attributes as deliverables"
+      );
+      assert.ok(
+        EXTRACTION_SYSTEM_PROMPT.includes("Do NOT choose \"prices\" solely because a fee appears in the same sentence"),
+        "System prompt must instruct not to choose prices solely due to nearby fee"
+      );
+      assert.ok(
+        EXTRACTION_SYSTEM_PROMPT.includes("Use \"prices\" when the price itself is the primary term being negotiated or discussed (e.g. \"That quote of $1,800 for the analytics dashboard\")"),
+        "System prompt must reserve prices for when the price term itself is negotiated"
+      );
+    });
+
     it("prohibits attaching nearby conversational response-time promises to terms in claims", () => {
       assert.ok(
         EXTRACTION_SYSTEM_PROMPT.includes("do NOT attach nearby conversational response-time promises"),
@@ -183,6 +221,47 @@ describe("Extraction Prompt Builder & Guardrails", () => {
       assert.ok(
         EXTRACTION_SYSTEM_PROMPT.includes("Continue extracting separate candidates when the source genuinely discusses distinct terms"),
         "System prompt must preserve separate extraction for genuinely distinct terms"
+      );
+    });
+
+    it("preserves distinct actions across speakers and conversational turns in multi-speaker correspondence", () => {
+      assert.ok(
+        EXTRACTION_SYSTEM_PROMPT.includes("In multi-speaker correspondence, inspect every speaker's statement for independently scope-relevant acts"),
+        "System prompt must instruct inspecting every speaker's statement"
+      );
+      assert.ok(
+        EXTRACTION_SYSTEM_PROMPT.includes("Extract distinct actions by different participants as separate candidates, even if they refer to the same deliverable or price"),
+        "System prompt must extract distinct participant actions separately"
+      );
+      assert.ok(
+        EXTRACTION_SYSTEM_PROMPT.includes("Do NOT merge distinct speech acts by different speakers or across separate conversational turns into a single candidate"),
+        "System prompt must prohibit merging actions across speakers and turns"
+      );
+    });
+
+    it("clarifies finance-review speech acts as proposals rather than questions", () => {
+      assert.ok(
+        EXTRACTION_SYSTEM_PROMPT.includes("stating that a price or change order must be run by finance, such as \"I need to run the $600 by finance first\""),
+        "System prompt must classify finance-approval statements as proposals"
+      );
+      assert.ok(
+        EXTRACTION_SYSTEM_PROMPT.includes("Do NOT classify a statement as a question merely because the speaker describes a procedural next step or need to check with finance/stakeholders"),
+        "System prompt must guard against classifying finance checks as questions"
+      );
+      assert.ok(
+        EXTRACTION_SYSTEM_PROMPT.includes("Classify such deferred commercial positions as a \"proposal\" with suggestedStatus \"unclear\" (do NOT classify as a question or infer approval)"),
+        "System prompt must assign unclear proposal status to deferred finance checks"
+      );
+    });
+
+    it("preserves the distinction between an agency scoping commitment and delivery commitment", () => {
+      assert.ok(
+        EXTRACTION_SYSTEM_PROMPT.includes("When an agency confirms intent to scope or investigate a requested item (e.g. \"Sounds good, I'll scope it\"), classify the speech act as \"commitment\" to scope the request, with commitmentType \"deliverables\" (and status \"proposed\")"),
+        "System prompt must treat scoping commitments as commitment / deliverables / proposed"
+      );
+      assert.ok(
+        EXTRACTION_SYSTEM_PROMPT.includes("Do NOT misrepresent an agency commitment to scope or investigate as a commitment to build or deliver the feature itself"),
+        "System prompt must guard against misrepresenting scoping as building"
       );
     });
 
