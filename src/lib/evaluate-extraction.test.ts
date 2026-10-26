@@ -128,6 +128,11 @@ describe("Offline Extraction Evaluation Engine", () => {
       assert.equal(report.groundTruthAlignment.speechActClassification.total, 1);
       assert.equal(report.groundTruthAlignment.speechActClassification.percentage, 0);
       assert.equal(report.groundTruthAlignment.speechActClassification.formatted, "0/1 (0.0%)");
+      assert.ok(
+        report.summary.failureReasons.some(
+          (r) => r.includes("Speech act mismatch for candidate 0") && r.includes("expected 'request'") && r.includes("got 'question'")
+        )
+      );
 
       // Suggested status was still correct
       assert.equal(report.groundTruthAlignment.suggestedStatusClassification.passed, 1);
@@ -153,6 +158,32 @@ describe("Offline Extraction Evaluation Engine", () => {
         "0/1 (0.0%)"
       );
       assert.equal(report.candidateDiagnostics[0].suggestedStatusMatch, false);
+      assert.ok(
+        report.summary.failureReasons.some(
+          (r) => r.includes("Suggested status mismatch for candidate 0") && r.includes("expected 'proposed'") && r.includes("got 'unclear'")
+        )
+      );
+    });
+
+    it("penalizes wrong commitment-type classification with explicit failure reason", () => {
+      const candidateWithWrongType: ExtractedCandidate = {
+        ...case2.expectedCandidates[0],
+        commitmentType: "prices", // Expected: 'deliverables'
+      };
+
+      const report = evaluateScenario(case2, {
+        candidates: [candidateWithWrongType],
+      });
+
+      assert.equal(report.summary.passed, false);
+      assert.equal(report.groundTruthAlignment.commitmentTypeClassification.passed, 0);
+      assert.equal(report.groundTruthAlignment.commitmentTypeClassification.total, 1);
+      assert.equal(report.candidateDiagnostics[0].commitmentTypeMatch, false);
+      assert.ok(
+        report.summary.failureReasons.some(
+          (r) => r.includes("Commitment type mismatch for candidate 0") && r.includes("expected 'deliverables'") && r.includes("got 'prices'")
+        )
+      );
     });
   });
 
@@ -194,6 +225,70 @@ describe("Offline Extraction Evaluation Engine", () => {
       assert.equal(report.candidateDiagnostics[0].schemaValid, false);
       assert.ok(
         report.candidateDiagnostics[0].notes.some((n) => n.includes("Schema validation failed"))
+      );
+      assert.ok(
+        report.summary.failureReasons.some((r) =>
+          r.startsWith("Candidate schema validation failed for candidate 0:")
+        )
+      );
+    });
+
+    it("reports candidate-specific schema failure reasons for multiple invalid candidates without deduplicating across candidates", () => {
+      const invalidCandidate0 = {
+        claim: "First invalid candidate",
+        evidenceQuote: "flat fixed fee of $3,500",
+        speaker: "Elena Vance",
+        timestamp: "Oct 2, 2026",
+        commitmentType: "prices",
+        speechAct: "commitment",
+        suggestedStatus: "confirmed", // Forbidden terminal status
+        confidence: "high",
+        explanation: "Rationale",
+      };
+
+      const invalidCandidate1 = {
+        claim: "Second invalid candidate",
+        evidenceQuote: "3 custom landing page wireframes",
+        speaker: "Elena Vance",
+        timestamp: "Oct 2, 2026",
+        commitmentType: "invalid_type", // Forbidden commitment type
+        speechAct: "commitment",
+        suggestedStatus: "proposed",
+        confidence: "high",
+        explanation: "Rationale",
+      };
+
+      const report = evaluateScenario(case1, {
+        candidates: [invalidCandidate0, invalidCandidate1],
+      });
+
+      assert.equal(report.summary.passed, false);
+      assert.equal(report.candidateDiagnostics.length, 2);
+      assert.equal(report.candidateDiagnostics[0].schemaValid, false);
+      assert.equal(report.candidateDiagnostics[1].schemaValid, false);
+
+      // Verify that candidate 0's schema failure is reported
+      assert.ok(
+        report.summary.failureReasons.some(
+          (r) => r.startsWith("Candidate schema validation failed for candidate 0:") && r.includes("suggestedStatus")
+        ),
+        "Expected candidate 0 schema failure in failureReasons"
+      );
+
+      // Verify that candidate 1's schema failure is ALSO reported (not suppressed by candidate 0)
+      assert.ok(
+        report.summary.failureReasons.some(
+          (r) => r.startsWith("Candidate schema validation failed for candidate 1:") && r.includes("commitmentType")
+        ),
+        "Expected candidate 1 schema failure in failureReasons"
+      );
+
+      // Verify no duplicate identical failure reasons exist
+      const uniqueReasons = new Set(report.summary.failureReasons);
+      assert.equal(
+        uniqueReasons.size,
+        report.summary.failureReasons.length,
+        "Expected no duplicate identical messages in failureReasons"
       );
     });
   });
@@ -339,6 +434,163 @@ describe("Offline Extraction Evaluation Engine", () => {
         report.mechanicalChecks.disclaimer,
         MECHANICAL_VERIFICATION_DISCLAIMER
       );
+    });
+
+    it("records explicit claim-alignment failureReason when quote is in source but claim diverges from expected", () => {
+      // Pair with case2 (expected quote: "Could we also add an interactive 3D product viewer module right below the hero section?")
+      // Candidate uses a shorter valid substring from source: "interactive 3D product viewer module"
+      // But claim is completely unrelated to 3D product viewer module
+      const divergentClaimCandidate: ExtractedCandidate = {
+        ...case2.expectedCandidates[0],
+        claim: "Completely unrelated payment schedule and database provisioning",
+        evidenceQuote: "interactive 3D product viewer module",
+      };
+
+      const report = evaluateScenario(case2, {
+        candidates: [divergentClaimCandidate],
+      });
+
+      assert.equal(report.summary.passed, false);
+      assert.equal(report.candidateDiagnostics[0].quoteExistsInSource, true);
+      assert.equal(report.candidateDiagnostics[0].claimSupported, false);
+      assert.ok(
+        report.summary.failureReasons.some((r) =>
+          r.includes("Claim alignment failed for candidate 0") &&
+          r.includes("extracted claim does not adequately match expected claim")
+        )
+      );
+    });
+  });
+
+  describe("Pass/Fail & Failure Reasons Invariant Consistency", () => {
+    it("guarantees that passed === true implies failureReasons is completely empty", () => {
+      const report1 = evaluateScenario(case1, { candidates: case1.expectedCandidates });
+      assert.equal(report1.summary.passed, true);
+      assert.equal(report1.summary.failureReasons.length, 0);
+
+      const report2 = evaluateScenario(case2, { candidates: case2.expectedCandidates });
+      assert.equal(report2.summary.passed, true);
+      assert.equal(report2.summary.failureReasons.length, 0);
+    });
+
+    it("guarantees that passed === false implies failureReasons.length > 0 across diverse failure modes", () => {
+      const failureModes: Array<{ name: string; input: unknown }> = [
+        {
+          name: "Malformed string output",
+          input: "raw model gibberish",
+        },
+        {
+          name: "Missing candidates envelope",
+          input: { notCandidates: [] },
+        },
+        {
+          name: "Candidate schema violation (forbidden status)",
+          input: {
+            candidates: [
+              {
+                ...case2.expectedCandidates[0],
+                suggestedStatus: "confirmed", // Forbidden by schema
+              },
+            ],
+          },
+        },
+        {
+          name: "Missing expected candidates",
+          input: { candidates: [] },
+        },
+        {
+          name: "Extraneous candidate",
+          input: {
+            candidates: [
+              case2.expectedCandidates[0],
+              {
+                claim: "Extra deliverable",
+                evidenceQuote: "Thanks, Greg",
+                speaker: "Greg",
+                timestamp: "Oct 24",
+                commitmentType: "deliverables" as const,
+                speechAct: "information" as const,
+                suggestedStatus: "proposed" as const,
+                confidence: "low" as const,
+                explanation: "Extra",
+              },
+            ],
+          },
+        },
+        {
+          name: "Quotation verification failure (fabricated quote)",
+          input: {
+            candidates: [
+              {
+                ...case2.expectedCandidates[0],
+                evidenceQuote: "Nonexistent quote that cannot be found anywhere in the source document",
+              },
+            ],
+          },
+        },
+        {
+          name: "Speech act mismatch",
+          input: {
+            candidates: [
+              {
+                ...case2.expectedCandidates[0],
+                speechAct: "question" as const,
+              },
+            ],
+          },
+        },
+        {
+          name: "Suggested status mismatch",
+          input: {
+            candidates: [
+              {
+                ...case2.expectedCandidates[0],
+                suggestedStatus: "unclear" as const,
+              },
+            ],
+          },
+        },
+        {
+          name: "Commitment type mismatch",
+          input: {
+            candidates: [
+              {
+                ...case2.expectedCandidates[0],
+                commitmentType: "prices" as const,
+              },
+            ],
+          },
+        },
+        {
+          name: "Claim alignment failure",
+          input: {
+            candidates: [
+              {
+                ...case2.expectedCandidates[0],
+                claim: "Completely unrelated payment schedule and database provisioning",
+                evidenceQuote: "interactive 3D product viewer module",
+              },
+            ],
+          },
+        },
+      ];
+
+      for (const mode of failureModes) {
+        const report = evaluateScenario(case2, mode.input);
+        assert.equal(
+          report.summary.passed,
+          false,
+          `Expected report.summary.passed === false for mode '${mode.name}'`
+        );
+        assert.ok(
+          report.summary.failureReasons.length > 0,
+          `Expected non-empty failureReasons for mode '${mode.name}', got 0`
+        );
+        for (const reason of report.summary.failureReasons) {
+          assert.equal(typeof reason, "string");
+          assert.ok(reason.length > 0, `Empty string reason in mode '${mode.name}'`);
+        }
+      }
     });
   });
 

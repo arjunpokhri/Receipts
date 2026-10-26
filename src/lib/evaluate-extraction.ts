@@ -432,6 +432,9 @@ export function evaluateExtraction(params: EvaluateExtractionParams): CaseEvalua
       speechActPassed++;
     } else {
       diag.notes.push(`Speech act mismatch: expected '${expected.speechAct}', got '${candidate.speechAct}'`);
+      failureReasons.push(
+        `Speech act mismatch for candidate ${diag.candidateIndex}: expected '${expected.speechAct}', got '${candidate.speechAct}'`
+      );
     }
 
     // Check suggested status classification
@@ -443,6 +446,9 @@ export function evaluateExtraction(params: EvaluateExtractionParams): CaseEvalua
       diag.notes.push(
         `Suggested status mismatch: expected '${expected.suggestedStatus}', got '${candidate.suggestedStatus}'`
       );
+      failureReasons.push(
+        `Suggested status mismatch for candidate ${diag.candidateIndex}: expected '${expected.suggestedStatus}', got '${candidate.suggestedStatus}'`
+      );
     }
 
     // Check commitment type classification
@@ -453,6 +459,9 @@ export function evaluateExtraction(params: EvaluateExtractionParams): CaseEvalua
     } else {
       diag.notes.push(
         `Commitment type mismatch: expected '${expected.commitmentType}', got '${candidate.commitmentType}'`
+      );
+      failureReasons.push(
+        `Commitment type mismatch for candidate ${diag.candidateIndex}: expected '${expected.commitmentType}', got '${candidate.commitmentType}'`
       );
     }
 
@@ -477,6 +486,9 @@ export function evaluateExtraction(params: EvaluateExtractionParams): CaseEvalua
       }
       if (!claimAligns) {
         diag.notes.push("Extracted claim does not adequately match the expected scope claim");
+        failureReasons.push(
+          `Claim alignment failed for candidate ${diag.candidateIndex}: extracted claim does not adequately match expected claim '${expected.claim}'`
+        );
       }
     }
   }
@@ -507,6 +519,19 @@ export function evaluateExtraction(params: EvaluateExtractionParams): CaseEvalua
       failureReasons.push(
         `Negative benchmark failure for candidate ${diag.candidateIndex}: quotation was expected to fail verification but passed`
       );
+    }
+  }
+
+  // Check candidate-level schema validity for malformed candidates, deduplicated per candidate
+  for (const diag of candidateDiagnostics) {
+    if (!diag.schemaValid) {
+      const prefix = `Candidate schema validation failed for candidate ${diag.candidateIndex}:`;
+      const alreadyReported = failureReasons.some((r) => r.startsWith(prefix));
+      if (!alreadyReported) {
+        failureReasons.push(
+          `${prefix} ${diag.schemaErrors?.join("; ") || "invalid schema"}`
+        );
+      }
     }
   }
 
@@ -559,6 +584,11 @@ export function evaluateExtraction(params: EvaluateExtractionParams): CaseEvalua
     noExtraneous &&
     isClassificationAccurate &&
     isClaimSupportAccurate;
+
+  // Invariant guarantee: whenever passed is false, failureReasons must be non-empty
+  if (!passed && failureReasons.length === 0) {
+    failureReasons.push("Evaluation failed to meet benchmark ground truth criteria");
+  }
 
   return {
     scenarioId,
