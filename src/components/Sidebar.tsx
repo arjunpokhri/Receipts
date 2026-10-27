@@ -45,6 +45,14 @@ export function Sidebar({
       badge: `${totalCount}`,
     },
     {
+      id: "custom" as ActiveTab,
+      label: "Analyze Conversation",
+      description: "Extract commitments & verify quotes",
+      icon: SparklesIcon,
+      badge: "Live AI",
+      badgeColor: "emerald",
+    },
+    {
       id: "review" as ActiveTab,
       label: "Scope & Request Review",
       description: "Delta analysis & change proposals",
@@ -69,12 +77,6 @@ export function Sidebar({
       label: "Execution Audit Trace",
       description: "Deterministic checks & schema audit",
       icon: FileTextIcon,
-    },
-    {
-      id: "custom" as ActiveTab,
-      label: "Live Extractor & Verifier",
-      description: "Nebius AI extraction & quote check",
-      icon: SparklesIcon,
     },
   ];
 
@@ -177,6 +179,8 @@ export function Sidebar({
                         className={`px-1.5 py-0.2 text-[10px] font-sans font-medium ${
                           item.badgeColor === "amber"
                             ? "border border-[#C58A36]/50 bg-[#FAF3E8] text-[#9A6518]"
+                            : item.badgeColor === "emerald"
+                            ? "border border-[#2E7D5B]/40 bg-[#EBF5F0] text-[#244D3A]"
                             : "border border-[#20251F]/15 bg-[#E7EEE8] text-[#20251F]"
                         }`}
                       >

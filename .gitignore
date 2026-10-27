@@ -42,4 +42,4 @@ yarn-error.log*
 next-env.d.ts
 
 # evaluation results
-eval-results/raw/
+eval-results/

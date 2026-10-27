@@ -6,12 +6,16 @@ import {
   RefreshCwIcon,
   FileTextIcon,
   CheckIcon,
+  SparklesIcon,
 } from "./icons";
 import type { AgreementItem, ProjectData } from "@/lib/sample-data";
+import type { ActiveTab } from "./Sidebar";
 
 interface HeaderProps {
   project: ProjectData;
   items: AgreementItem[];
+  activeTab?: ActiveTab;
+  onNavigateToTab?: (tab: ActiveTab) => void;
   onReset: () => void;
   onOpenMobileMenu: () => void;
 }
@@ -19,6 +23,8 @@ interface HeaderProps {
 export function Header({
   project,
   items,
+  activeTab,
+  onNavigateToTab,
   onReset,
   onOpenMobileMenu,
 }: HeaderProps) {
@@ -147,33 +153,50 @@ export function Header({
         </div>
 
         {/* Right Side: Actions */}
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={onReset}
-            className="brutal-btn-outline inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-[#20251F]"
-            title="Reset to initial sample state"
-          >
-            <RefreshCwIcon className="h-3.5 w-3.5 text-[#576356]" />
-            <span>Reset Sample</span>
-          </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {onNavigateToTab && (
+            <button
+              type="button"
+              onClick={() => onNavigateToTab("custom")}
+              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold shadow-[1px_1px_0px_#20251F] transition-all active:translate-x-0.5 active:translate-y-0.5 ${
+                activeTab === "custom"
+                  ? "border border-[#244D3A] bg-[#244D3A] text-white"
+                  : "border border-[#20251F] bg-[#244D3A] text-white hover:bg-[#1E3F30]"
+              }`}
+              title="Analyze new client communication with Nebius"
+            >
+              <SparklesIcon className="h-3.5 w-3.5 text-amber-300" />
+              <span>Analyze Conversation</span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={handleExportMarkdown}
-            className="brutal-btn-primary inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs"
+            className="brutal-btn-outline inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-[#20251F]"
             title="Download verified agreement ledger in Markdown"
           >
             {copiedExport ? (
               <>
-                <CheckIcon className="h-3.5 w-3.5 text-emerald-300" />
+                <CheckIcon className="h-3.5 w-3.5 text-emerald-600" />
                 <span>Downloaded & Copied!</span>
               </>
             ) : (
               <>
-                <FileTextIcon className="h-3.5 w-3.5" />
+                <FileTextIcon className="h-3.5 w-3.5 text-[#576356]" />
                 <span>Export Markdown</span>
               </>
             )}
+          </button>
+
+          <button
+            type="button"
+            onClick={onReset}
+            className="brutal-btn-outline inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-[#576356] hover:text-[#20251F]"
+            title="Reset to initial sample state"
+          >
+            <RefreshCwIcon className="h-3.5 w-3.5 text-[#889386]" />
+            <span>Reset</span>
           </button>
         </div>
       </div>

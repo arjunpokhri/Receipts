@@ -13,6 +13,7 @@ import {
   ClockIcon,
   DollarSignIcon,
   FileTextIcon,
+  ArrowRightIcon,
 } from "./icons";
 import { verifyEvidence } from "@/lib/verifier";
 import { MECHANICAL_VERIFICATION_DISCLAIMER } from "@/lib/evaluate-extraction";
@@ -39,16 +40,57 @@ interface CustomTextVerifierProps {
     candidate: VerifiedExtractedCandidate,
     sourceText: string
   ) => { success: boolean; error?: string } | void;
+  onNavigateToLedger?: (itemId?: string) => void;
 }
 
-export function CustomTextVerifier({ onAddCandidateToLedger }: CustomTextVerifierProps) {
-  const [sourceText, setSourceText] = useState(
-    `From: Sarah Jenkins <sarah@clientbrand.org>\nDate: Oct 12, 2026, 11:15 AM\nSubject: Mobile navigation feedback\n\nHi Marcus,\n\nWe love the desktop wireframes. For mobile navigation, we agree to proceed with the slide-out menu drawer at the quoted $650 addition.\n\nPlease ensure it is completed by Oct 24th.\n\nBest,\nSarah`
-  );
+const AURA_PRESET_1_TEXT = `From: Elena Vance <elena@client.co>
+Date: Oct 12, 2026, 11:15 AM
+To: Marcus Miller <marcus@studio.co>
+Subject: Aura Health — Mobile navigation & tablet breakpoints
 
-  const [testQuote, setTestQuote] = useState(
-    "we agree to proceed with the slide-out menu drawer at the quoted $650 addition"
-  );
+Hi Marcus,
+
+We love the desktop wireframes for the Aura Health portal. For the mobile navigation, we agree to proceed with the slide-out menu drawer at the quoted $650 addition.
+
+Could we also include tablet breakpoint optimizations by October 24th? Let me check with our product lead before we make that official.
+
+Best,
+Elena`;
+
+const AURA_PRESET_1_QUOTE =
+  "we agree to proceed with the slide-out menu drawer at the quoted $650 addition";
+
+const AURA_PRESET_2_TEXT = `From: Greg Thorne <greg@client.co>
+Date: Oct 5, 2026, 02:15 PM
+To: Marcus Miller <marcus@studio.co>
+Subject: Interactive 3D Viewer Request
+
+Hi Marcus,
+
+The homepage layout looks solid. Could we also add an interactive 3D product viewer module right below the hero section? Our marketing team thinks it would boost conversions.
+
+We would need this ready alongside the main delivery on October 17th if possible.
+
+Thanks,
+Greg`;
+
+const AURA_PRESET_2_QUOTE =
+  "Could we also add an interactive 3D product viewer module right below the hero section?";
+
+const AURA_PRESET_3_TEXT = `Thread Transcript #general-ops:
+[10:14 AM] Alex (Studio Mono): 'The surcharge for weekend maintenance and off-hours staging will be $150/hr as discussed.'
+[10:32 AM] Sam (Client Operations): 'Understood, we are okay with the $100/hr weekend surcharge as long as logs are provided.'
+[10:45 AM] Alex (Studio Mono): 'Wait Sam, our standard SLA rate for weekends is strictly $150/hr.'`;
+
+const AURA_PRESET_3_QUOTE =
+  "we are okay with the $100/hr weekend surcharge as long as logs are provided.";
+
+export function CustomTextVerifier({
+  onAddCandidateToLedger,
+  onNavigateToLedger,
+}: CustomTextVerifierProps) {
+  const [sourceText, setSourceText] = useState(AURA_PRESET_1_TEXT);
+  const [testQuote, setTestQuote] = useState(AURA_PRESET_1_QUOTE);
 
   const [strictMode, setStrictMode] = useState(false);
 
@@ -57,6 +99,7 @@ export function CustomTextVerifier({ onAddCandidateToLedger }: CustomTextVerifie
   const [snapshotSession, setSnapshotSession] = useState<SourceSnapshotSession<ExtractionApiResponse> | null>(null);
   const [extractionError, setExtractionError] = useState<string | null>(null);
   const [addedCandidateIds, setAddedCandidateIds] = useState<Set<string>>(new Set());
+  const [lastAddedItem, setLastAddedItem] = useState<{ id: string; claim: string } | null>(null);
 
   const extractionResult = snapshotSession?.result ?? null;
   const isDiverged = isSnapshotDiverged(snapshotSession, sourceText);
@@ -76,6 +119,7 @@ export function CustomTextVerifier({ onAddCandidateToLedger }: CustomTextVerifie
     // Invalidate stale extraction results immediately upon starting a new extraction
     setSnapshotSession(null);
     setAddedCandidateIds(new Set());
+    setLastAddedItem(null);
     setIsExtracting(true);
     setExtractionError(null);
 
@@ -122,6 +166,7 @@ export function CustomTextVerifier({ onAddCandidateToLedger }: CustomTextVerifie
     }
 
     setAddedCandidateIds((prev) => new Set(prev).add(candidate.id));
+    setLastAddedItem({ id: candidate.id, claim: candidate.claim });
   };
 
   const typeIcons: Record<CommitmentType, React.ComponentType<{ className?: string }>> = {
@@ -179,7 +224,7 @@ export function CustomTextVerifier({ onAddCandidateToLedger }: CustomTextVerifie
 
       {/* Primary Input: Raw Source Communication */}
       <div className="border border-[#20251F]/10 bg-white p-5 shadow-xs space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <label className="text-xs font-semibold font-sans text-[#20251F]">
               Raw Source Communication
@@ -191,6 +236,52 @@ export function CustomTextVerifier({ onAddCandidateToLedger }: CustomTextVerifie
           <div className="text-[11px] font-mono text-[#889386]">
             {sourceText.length} chars • {sourceText.split(/\s+/).filter(Boolean).length} words
           </div>
+        </div>
+
+        {/* Preset Aura Health demo scenarios */}
+        <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+          <span className="text-[11px] font-sans font-medium text-[#576356] mr-1">
+            Aura Health Demo Presets:
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setSourceText(AURA_PRESET_1_TEXT);
+              setTestQuote(AURA_PRESET_1_QUOTE);
+              setSnapshotSession(null);
+              setExtractionError(null);
+              setLastAddedItem(null);
+            }}
+            className="border border-[#20251F]/15 bg-[#F6F5F0] px-2 py-0.5 text-[11px] font-sans text-[#20251F] hover:border-[#244D3A] hover:bg-[#E7EEE8] transition-colors"
+          >
+            Mobile Nav Drawer ($650)
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setSourceText(AURA_PRESET_2_TEXT);
+              setTestQuote(AURA_PRESET_2_QUOTE);
+              setSnapshotSession(null);
+              setExtractionError(null);
+              setLastAddedItem(null);
+            }}
+            className="border border-[#20251F]/15 bg-[#F6F5F0] px-2 py-0.5 text-[11px] font-sans text-[#20251F] hover:border-[#244D3A] hover:bg-[#E7EEE8] transition-colors"
+          >
+            Interactive 3D Viewer Request
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setSourceText(AURA_PRESET_3_TEXT);
+              setTestQuote(AURA_PRESET_3_QUOTE);
+              setSnapshotSession(null);
+              setExtractionError(null);
+              setLastAddedItem(null);
+            }}
+            className="border border-[#20251F]/15 bg-[#F6F5F0] px-2 py-0.5 text-[11px] font-sans text-[#20251F] hover:border-[#244D3A] hover:bg-[#E7EEE8] transition-colors"
+          >
+            Weekend Maintenance Slack
+          </button>
         </div>
 
         <textarea
@@ -278,6 +369,27 @@ export function CustomTextVerifier({ onAddCandidateToLedger }: CustomTextVerifie
           )}
 
           {/* Summary Bar */}
+          {lastAddedItem && (
+            <div className="border border-[#2E7D5B]/30 bg-[#F0F6F2] p-3 text-xs flex flex-wrap items-center justify-between gap-2 shadow-xs transition-all">
+              <div className="flex items-center gap-2 text-[#244D3A]">
+                <CheckIcon className="h-4 w-4 shrink-0 text-[#2E7D5B]" />
+                <span>
+                  <strong>Added to Agreement Ledger:</strong> &ldquo;{lastAddedItem.claim}&rdquo;
+                </span>
+              </div>
+              {onNavigateToLedger && (
+                <button
+                  type="button"
+                  onClick={() => onNavigateToLedger(lastAddedItem.id)}
+                  className="inline-flex items-center gap-1 border border-[#244D3A] bg-[#244D3A] px-2.5 py-1 text-xs font-semibold text-white shadow-xs hover:bg-[#1E3F30] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                >
+                  <span>View in Ledger</span>
+                  <ArrowRightIcon className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+          )}
+
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#20251F]/10 pb-3">
             <div>
               <div className="flex items-center gap-2">
@@ -339,48 +451,61 @@ export function CustomTextVerifier({ onAddCandidateToLedger }: CustomTextVerifie
                       {/* Explicit Human Ledger Addition Action */}
                       {onAddCandidateToLedger && (
                         <div className="flex flex-col items-end gap-1">
-                          <button
-                            type="button"
-                            onClick={() => handleAddToLedger(cand)}
-                            disabled={isAdded || cand.quoteVerified !== true}
-                            title={
-                              cand.quoteVerified !== true
-                                ? "Evidence verification failed against source text"
-                                : cand.suggestedStatus === "baseline"
-                                ? "Model suggested baseline, but ordinary correspondence cannot establish baseline. It will be added as proposed."
-                                : undefined
-                            }
-                            className={`inline-flex items-center gap-1.5 border px-2.5 py-1 text-xs font-sans font-medium transition-all ${
-                              isAdded
-                                ? "border-[#2E7D5B]/30 bg-[#F0F6F2] text-[#244D3A] cursor-default"
-                                : cand.quoteVerified !== true
-                                ? "border-[#C95C4B]/30 bg-[#FDF2F0] text-[#A83827] cursor-not-allowed opacity-75"
-                                : "border-[#20251F]/20 bg-white text-[#20251F] hover:border-[#244D3A] hover:bg-[#E7EEE8]"
-                            }`}
-                          >
-                            {isAdded ? (
-                              <>
+                          {isAdded ? (
+                            <div className="flex items-center gap-1.5">
+                              <span className="inline-flex items-center gap-1 border border-[#2E7D5B]/30 bg-[#F0F6F2] px-2.5 py-1 text-xs font-sans font-medium text-[#244D3A]">
                                 <CheckIcon className="h-3.5 w-3.5 text-[#2E7D5B]" />
                                 <span>Added to Ledger</span>
-                              </>
-                            ) : cand.quoteVerified !== true ? (
-                              <>
-                                <XCircleIcon className="h-3.5 w-3.5 text-[#C95C4B]" />
-                                <span>Verification Failed (Cannot Add)</span>
-                              </>
-                            ) : cand.suggestedStatus === "baseline" ? (
-                              <>
-                                <span>Add to Active Ledger as</span>
-                                <strong>Proposed</strong>
-                                <span className="text-[10px] text-[#889386] font-normal">(downgraded)</span>
-                              </>
-                            ) : (
-                              <>
-                                <span>Add to Active Ledger as</span>
-                                <strong className="capitalize">{cand.suggestedStatus}</strong>
-                              </>
-                            )}
-                          </button>
+                              </span>
+                              {onNavigateToLedger && (
+                                <button
+                                  type="button"
+                                  onClick={() => onNavigateToLedger(cand.id)}
+                                  className="inline-flex items-center gap-1 border border-[#20251F]/20 bg-white px-2 py-1 text-xs font-sans font-semibold text-[#20251F] hover:border-[#244D3A] hover:bg-[#E7EEE8] transition-colors"
+                                  title="Jump to this item in Agreement Ledger"
+                                >
+                                  <span>View in Ledger</span>
+                                  <ArrowRightIcon className="h-3 w-3" />
+                                </button>
+                              )}
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleAddToLedger(cand)}
+                              disabled={cand.quoteVerified !== true}
+                              title={
+                                cand.quoteVerified !== true
+                                  ? "Evidence verification failed against source text"
+                                  : cand.suggestedStatus === "baseline"
+                                  ? "Model suggested baseline, but ordinary correspondence cannot establish baseline. It will be added as proposed."
+                                  : undefined
+                              }
+                              className={`inline-flex items-center gap-1.5 border px-2.5 py-1 text-xs font-sans font-medium transition-all ${
+                                cand.quoteVerified !== true
+                                  ? "border-[#C95C4B]/30 bg-[#FDF2F0] text-[#A83827] cursor-not-allowed opacity-75"
+                                  : "border-[#20251F]/20 bg-white text-[#20251F] hover:border-[#244D3A] hover:bg-[#E7EEE8]"
+                              }`}
+                            >
+                              {cand.quoteVerified !== true ? (
+                                <>
+                                  <XCircleIcon className="h-3.5 w-3.5 text-[#C95C4B]" />
+                                  <span>Verification Failed (Cannot Add)</span>
+                                </>
+                              ) : cand.suggestedStatus === "baseline" ? (
+                                <>
+                                  <span>Add to Active Ledger as</span>
+                                  <strong>Proposed</strong>
+                                  <span className="text-[10px] text-[#889386] font-normal">(downgraded)</span>
+                                </>
+                              ) : (
+                                <>
+                                  <span>Add to Active Ledger as</span>
+                                  <strong className="capitalize">{cand.suggestedStatus}</strong>
+                                </>
+                              )}
+                            </button>
+                          )}
                           {cand.suggestedStatus === "baseline" && !isAdded && (
                             <span className="text-[10px] text-[#889386]">
                               * Model suggested baseline; original agreement must be designated separately.

@@ -30,6 +30,17 @@ import {
   type SourceSnapshotSession,
 } from "./source-snapshot.ts";
 
+import {
+  loadLedgerFromStorage,
+  saveLedgerToStorage,
+  clearLedgerStorage,
+  parseStoredLedger,
+  isValidLedgerItem,
+  RECEIPTS_LEDGER_STORAGE_KEY,
+  RECEIPTS_SELECTED_ITEM_KEY,
+  type StoredLedgerState,
+} from "./ledger-storage.ts";
+
 export {
   resolveItemSource,
   resolveItemSourceText,
@@ -39,6 +50,14 @@ export {
   getSessionSourceText,
   isSnapshotDiverged,
   type SourceSnapshotSession,
+  loadLedgerFromStorage,
+  saveLedgerToStorage,
+  clearLedgerStorage,
+  parseStoredLedger,
+  isValidLedgerItem,
+  RECEIPTS_LEDGER_STORAGE_KEY,
+  RECEIPTS_SELECTED_ITEM_KEY,
+  type StoredLedgerState,
 };
 
 export interface LedgerTransitionResult<T = AgreementItem> {

@@ -12,6 +12,7 @@ import {
   ClockIcon,
   FileTextIcon,
   ChevronRightIcon,
+  SparklesIcon,
 } from "./icons";
 import type { AgreementItem } from "@/lib/sample-data";
 import type { CommitmentType, ApplicationStatus } from "@/lib/schema";
@@ -23,6 +24,7 @@ interface AgreementLedgerProps {
   onConfirmItem: (id: string) => void;
   onDismissItem: (id: string) => void;
   onRestoreItem: (id: string) => void;
+  onOpenExtractor?: () => void;
 }
 
 export function AgreementLedger({
@@ -32,6 +34,7 @@ export function AgreementLedger({
   onConfirmItem,
   onDismissItem,
   onRestoreItem,
+  onOpenExtractor,
 }: AgreementLedgerProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ApplicationStatus | "all">("all");
@@ -113,16 +116,31 @@ export function AgreementLedger({
             </p>
           </div>
 
-          {/* Search Box */}
-          <div className="relative w-full sm:w-64 shrink-0">
-            <SearchIcon className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#889386]" />
-            <input
-              type="text"
-              placeholder="Search claims or quotes..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full border border-[#20251F]/15 bg-white py-1.5 pl-8 pr-3 text-xs text-[#20251F] placeholder:text-[#889386] focus:border-[#244D3A] focus:outline-hidden"
-            />
+          {/* Actions & Search Box */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            {onOpenExtractor && (
+              <button
+                type="button"
+                onClick={onOpenExtractor}
+                className="inline-flex items-center gap-1.5 border border-[#20251F] bg-white px-3 py-1.5 text-xs font-semibold text-[#20251F] shadow-[1px_1px_0px_#20251F] hover:border-[#244D3A] hover:bg-[#E7EEE8] active:translate-x-0.5 active:translate-y-0.5 shrink-0"
+                title="Extract commitments from new client communication"
+              >
+                <SparklesIcon className="h-3.5 w-3.5 text-[#244D3A]" />
+                <span>Analyze Conversation</span>
+              </button>
+            )}
+
+            {/* Search Box */}
+            <div className="relative w-full sm:w-56 shrink-0">
+              <SearchIcon className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#889386]" />
+              <input
+                type="text"
+                placeholder="Search claims or quotes..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full border border-[#20251F]/15 bg-white py-1.5 pl-8 pr-3 text-xs text-[#20251F] placeholder:text-[#889386] focus:border-[#244D3A] focus:outline-hidden"
+              />
+            </div>
           </div>
         </div>
 
@@ -180,7 +198,7 @@ export function AgreementLedger({
               <th className="px-3 py-3 w-24 min-w-[85px] whitespace-nowrap">Type</th>
               <th className="px-3 py-3 w-24 min-w-[85px] whitespace-nowrap">Status</th>
               <th className="px-3 py-3 min-w-[190px]">Verbatim Quotation & Source</th>
-              <th className="sticky right-0 z-20 bg-[#E7EEE8] py-3 pl-2.5 pr-4 text-right w-[124px] min-w-[124px] whitespace-nowrap border-l border-[#20251F]/10 shadow-[-4px_0_8px_-2px_rgba(32,37,31,0.06)]">
+              <th className="sticky right-0 z-20 bg-[#E7EEE8] py-3 pl-2.5 pr-4 text-right min-w-[148px] whitespace-nowrap border-l border-[#20251F]/10 shadow-[-4px_0_8px_-2px_rgba(32,37,31,0.06)]">
                 Review Action
               </th>
             </tr>
@@ -262,18 +280,20 @@ export function AgreementLedger({
 
                     {/* Sticky Review Action Column - Always Visible and Usable */}
                     <td
-                      className={`sticky right-0 z-10 py-3.5 pl-2.5 pr-4 align-top text-right w-[124px] min-w-[124px] whitespace-nowrap border-l border-[#20251F]/8 shadow-[-4px_0_8px_-2px_rgba(32,37,31,0.06)] transition-colors ${
+                      className={`sticky right-0 z-10 py-3.5 pl-2.5 pr-4 align-top text-right min-w-[148px] whitespace-nowrap border-l border-[#20251F]/8 shadow-[-4px_0_8px_-2px_rgba(32,37,31,0.06)] transition-colors ${
                         isSelected ? "bg-[#F3F6F3]" : "bg-white group-hover/row:bg-[#F9F8F5]"
                       }`}
-                      onClick={(e) => e.stopPropagation()}
                     >
                       <div className="flex items-center justify-end gap-1.5">
                         {isPending && (
                           <>
                             <button
                               type="button"
-                              onClick={() => onConfirmItem(item.id)}
-                              className="inline-flex items-center gap-1 border border-[#2E7D5B]/50 bg-[#EBF5F0] px-2 py-1 text-xs font-medium text-[#2E7D5B] hover:bg-[#2E7D5B] hover:text-white transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onConfirmItem(item.id);
+                              }}
+                              className="inline-flex items-center gap-1 border border-[#2E7D5B]/50 bg-[#EBF5F0] px-2 py-1 text-xs font-medium text-[#2E7D5B] hover:bg-[#2E7D5B] hover:text-white transition-colors cursor-pointer"
                               title="Human confirmation: Promote to confirmed agreement"
                             >
                               <CheckIcon className="h-3 w-3" />
@@ -281,8 +301,11 @@ export function AgreementLedger({
                             </button>
                             <button
                               type="button"
-                              onClick={() => onDismissItem(item.id)}
-                              className="inline-flex items-center gap-1 border border-[#C95C4B]/40 bg-white px-2 py-1 text-xs font-medium text-[#C95C4B] hover:bg-[#FAEEEC] transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDismissItem(item.id);
+                              }}
+                              className="inline-flex items-center gap-1 border border-[#C95C4B]/40 bg-white px-2 py-1 text-xs font-medium text-[#C95C4B] hover:bg-[#FAEEEC] transition-colors cursor-pointer"
                               title="Dismiss from active ledger"
                             >
                               <XIcon className="h-3 w-3" />
@@ -294,8 +317,11 @@ export function AgreementLedger({
                         {item.status === "dismissed" && (
                           <button
                             type="button"
-                            onClick={() => onRestoreItem(item.id)}
-                            className="inline-flex items-center gap-1 border border-[#20251F]/20 bg-white px-2 py-0.5 text-xs text-[#20251F] hover:bg-[#F6F5F0]"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onRestoreItem(item.id);
+                            }}
+                            className="inline-flex items-center gap-1 border border-[#20251F]/20 bg-white px-2 py-0.5 text-xs text-[#20251F] hover:bg-[#F6F5F0] cursor-pointer"
                           >
                             <span>Restore</span>
                           </button>
@@ -309,9 +335,13 @@ export function AgreementLedger({
 
                         <button
                           type="button"
-                          onClick={() => onSelectItem(item)}
-                          className="p-1 text-[#889386] hover:text-[#20251F]"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectItem(item);
+                          }}
+                          className="inline-flex items-center justify-center h-7 w-7 border border-[#20251F]/15 bg-white text-[#576356] shadow-[1px_1px_0px_#20251F] hover:border-[#244D3A] hover:bg-[#244D3A] hover:text-white active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer shrink-0"
                           title="Inspect verbatim evidence in source conversation"
+                          aria-label={`Inspect evidence for ${item.claim}`}
                         >
                           <ChevronRightIcon className="h-4 w-4" />
                         </button>

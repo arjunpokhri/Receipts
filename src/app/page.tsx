@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Sidebar, type ActiveTab } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
 import { BentoOverview } from "@/components/BentoOverview";
@@ -18,6 +18,9 @@ import {
   restoreItemInLedger,
   addCandidateToLedgerItems,
   resolveItemSourceText,
+  loadLedgerFromStorage,
+  saveLedgerToStorage,
+  clearLedgerStorage,
   type LiveCandidateInput,
 } from "@/lib/ledger-actions";
 
@@ -27,6 +30,36 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("ledger");
   const [selectedItemId, setSelectedItemId] = useState<string | null>(items[0]?.id || null);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isStorageInitialized, setIsStorageInitialized] = useState(false);
+
+  // Restore persisted ledger state on initial client mount
+  useEffect(() => {
+    try {
+      const stored = loadLedgerFromStorage();
+      if (stored && stored.items.length > 0) {
+        queueMicrotask(() => {
+          setItems(stored.items);
+          if (stored.selectedId && stored.items.some((i) => i.id === stored.selectedId)) {
+            setSelectedItemId(stored.selectedId);
+          }
+        });
+      }
+    } catch (e) {
+      console.warn("Could not load persisted ledger from storage:", e);
+    } finally {
+      setIsStorageInitialized(true);
+    }
+  }, []);
+
+  // Persist ledger changes across user actions and additions
+  useEffect(() => {
+    if (!isStorageInitialized) return;
+    try {
+      saveLedgerToStorage(items, selectedItemId);
+    } catch (e) {
+      console.warn("Could not persist ledger to storage:", e);
+    }
+  }, [items, selectedItemId, isStorageInitialized]);
 
   const selectedItem = items.find((i) => i.id === selectedItemId) || null;
 
@@ -70,12 +103,14 @@ export default function Home() {
   };
 
   const handleReset = () => {
+    clearLedgerStorage();
     setItems(SAMPLE_PROJECT.initialItems);
     setSelectedItemId(SAMPLE_PROJECT.initialItems[0]?.id || null);
   };
 
   const handleSelectItem = (item: AgreementItem) => {
     setSelectedItemId(item.id);
+    setActiveTab("evidence");
   };
 
   const handleAddLiveCandidate = (
@@ -112,6 +147,8 @@ export default function Home() {
         <Header
           project={project}
           items={items}
+          activeTab={activeTab}
+          onNavigateToTab={(tab) => setActiveTab(tab)}
           onReset={handleReset}
           onOpenMobileMenu={() => setIsMobileOpen(true)}
         />
@@ -138,10 +175,11 @@ export default function Home() {
                   onConfirmItem={handleConfirmItem}
                   onDismissItem={handleDismissItem}
                   onRestoreItem={handleRestoreItem}
+                  onOpenExtractor={() => setActiveTab("custom")}
                 />
               </div>
               {selectedItem && (
-                <div className="xl:col-span-4">
+                <div className="hidden xl:block xl:col-span-4">
                   <EvidenceInspector
                     item={selectedItem}
                     threads={project.threads}
@@ -157,10 +195,7 @@ export default function Home() {
           {activeTab === "review" && (
             <RequestReview
               items={items}
-              onSelectItem={(item) => {
-                handleSelectItem(item);
-                setActiveTab("evidence");
-              }}
+              onSelectItem={handleSelectItem}
               onConfirmItem={handleConfirmItem}
               onDismissItem={handleDismissItem}
               onDraftForPending={() => setActiveTab("draft")}
@@ -200,7 +235,13 @@ export default function Home() {
 
           {activeTab === "custom" && (
             <div className="max-w-5xl mx-auto">
-              <CustomTextVerifier onAddCandidateToLedger={handleAddLiveCandidate} />
+              <CustomTextVerifier
+                onAddCandidateToLedger={handleAddLiveCandidate}
+                onNavigateToLedger={(itemId) => {
+                  if (itemId) setSelectedItemId(itemId);
+                  setActiveTab("ledger");
+                }}
+              />
             </div>
           )}
         </main>
