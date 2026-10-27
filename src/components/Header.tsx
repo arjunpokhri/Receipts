@@ -7,6 +7,10 @@ import {
   FileTextIcon,
   CheckIcon,
   SparklesIcon,
+  SunIcon,
+  MoonIcon,
+  PanelLeftCloseIcon,
+  PanelLeftOpenIcon,
 } from "./icons";
 import type { AgreementItem, ProjectData } from "@/lib/sample-data";
 import type { ActiveTab } from "./Sidebar";
@@ -18,6 +22,10 @@ interface HeaderProps {
   onNavigateToTab?: (tab: ActiveTab) => void;
   onReset: () => void;
   onOpenMobileMenu: () => void;
+  theme?: "light" | "dark";
+  onToggleTheme?: () => void;
+  isSidebarCollapsed?: boolean;
+  onToggleSidebar?: () => void;
 }
 
 export function Header({
@@ -27,6 +35,10 @@ export function Header({
   onNavigateToTab,
   onReset,
   onOpenMobileMenu,
+  theme = "light",
+  onToggleTheme,
+  isSidebarCollapsed = false,
+  onToggleSidebar,
 }: HeaderProps) {
   const [copiedExport, setCopiedExport] = useState(false);
 
@@ -115,88 +127,129 @@ export function Header({
   };
 
   return (
-    <header className="border-b border-[#20251F]/10 bg-[#F6F5F0] px-6 py-3.5">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        {/* Left Side: Mobile Menu + Project Overview */}
-        <div className="flex items-start gap-3">
+    <header className="border-b border-[var(--surface-border)] bg-[var(--paper)] px-5 sm:px-6 py-3 transition-colors">
+      <div className="flex flex-col gap-3.5 sm:flex-row sm:items-center sm:justify-between">
+        {/* Left Side: Mobile Menu, Sidebar Toggle + Project Overview */}
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={onOpenMobileMenu}
-            className="mt-1 border border-[#20251F]/30 bg-white p-2 text-[#20251F] shadow-[1px_1px_0px_#20251F] lg:hidden"
-            aria-label="Open navigation"
+            className="border border-[var(--surface-border)] bg-[var(--paper-card)] p-2 text-[var(--ink)] shadow-[1px_1px_0px_var(--surface-border)] lg:hidden cursor-pointer"
+            aria-label="Open navigation drawer"
           >
             <MenuIcon className="h-4 w-4" />
           </button>
+
+          {onToggleSidebar && (
+            <button
+              type="button"
+              onClick={onToggleSidebar}
+              className="hidden lg:inline-flex p-1.5 border border-[var(--surface-border)] bg-[var(--paper-card)] text-[var(--ink-muted)] hover:text-[var(--ink)] shadow-[1px_1px_0px_rgba(0,0,0,0.08)] cursor-pointer transition-colors"
+              title={isSidebarCollapsed ? "Expand sidebar (Ctrl+B)" : "Collapse sidebar (Ctrl+B)"}
+              aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {isSidebarCollapsed ? (
+                <PanelLeftOpenIcon className="h-4 w-4" />
+              ) : (
+                <PanelLeftCloseIcon className="h-4 w-4" />
+              )}
+            </button>
+          )}
+
           <div>
-            <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-[#20251F]">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="font-serif text-lg sm:text-xl font-bold tracking-tight text-[var(--ink)]">
                 {project.title}
               </h1>
-              <span className="border border-[#244D3A]/25 bg-[#EBF3EE] px-2 py-0.5 text-[11px] font-sans font-medium text-[#244D3A]">
+              <span className="border border-[var(--emerald-border)] bg-[var(--emerald-bg)] px-2 py-0.5 text-[11px] font-sans font-medium text-[var(--emerald-state)]">
                 Evidence-Backed Project
               </span>
             </div>
-            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#576356]">
+            <div className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-[var(--ink-muted)]">
               <span>
-                <strong className="text-[#20251F]">Client:</strong> {project.clientName} ({project.clientCompany})
+                <strong className="text-[var(--ink)]">Client:</strong> {project.clientName} ({project.clientCompany})
               </span>
-              <span className="text-[#889386]">•</span>
+              <span className="text-[var(--ink-subtle)]">•</span>
               <span>
-                <strong className="text-[#20251F]">Contractor:</strong> {project.contractorName}
+                <strong className="text-[var(--ink)]">Contractor:</strong> {project.contractorName}
               </span>
-              <span className="text-[#889386]">•</span>
+              <span className="text-[var(--ink-subtle)]">•</span>
               <span>
-                <strong className="text-[#20251F]">Started:</strong> {project.startDate}
+                <strong className="text-[var(--ink)]">Started:</strong> {project.startDate}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Right Side: Actions */}
+        {/* Right Side: Theme Toggle & Actions */}
         <div className="flex flex-wrap items-center gap-2">
           {onNavigateToTab && (
             <button
               type="button"
               onClick={() => onNavigateToTab("custom")}
-              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold shadow-[1px_1px_0px_#20251F] transition-all active:translate-x-0.5 active:translate-y-0.5 ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold shadow-[1.5px_1.5px_0px_var(--ink)] transition-all duration-150 active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
                 activeTab === "custom"
-                  ? "border border-[#244D3A] bg-[#244D3A] text-white"
-                  : "border border-[#20251F] bg-[#244D3A] text-white hover:bg-[#1E3F30]"
+                  ? "border border-[var(--forest)] bg-[var(--forest)] text-white"
+                  : "border border-[var(--ink)] bg-[var(--forest)] text-white hover:bg-[var(--forest-hover)] hover:shadow-[2px_2px_0px_var(--ink)]"
               }`}
               title="Analyze new client communication with Nebius"
             >
               <SparklesIcon className="h-3.5 w-3.5 text-amber-300" />
-              <span>Analyze Conversation</span>
+              <span className="hidden xs:inline">Analyze Conversation</span>
+              <span className="xs:hidden">Analyze</span>
             </button>
           )}
 
           <button
             type="button"
             onClick={handleExportMarkdown}
-            className="brutal-btn-outline inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-[#20251F]"
+            className="brutal-btn-outline inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-[var(--ink)] cursor-pointer"
             title="Download verified agreement ledger in Markdown"
           >
             {copiedExport ? (
               <>
-                <CheckIcon className="h-3.5 w-3.5 text-emerald-600" />
-                <span>Downloaded & Copied!</span>
+                <CheckIcon className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>Copied & Saved!</span>
               </>
             ) : (
               <>
-                <FileTextIcon className="h-3.5 w-3.5 text-[#576356]" />
-                <span>Export Markdown</span>
+                <FileTextIcon className="h-3.5 w-3.5 text-[var(--ink-muted)]" />
+                <span className="hidden sm:inline">Export Markdown</span>
+                <span className="sm:hidden">Export</span>
               </>
             )}
           </button>
 
+          {onToggleTheme && (
+            <button
+              type="button"
+              onClick={onToggleTheme}
+              className="brutal-btn-outline inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-[var(--ink)] cursor-pointer"
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {theme === "dark" ? (
+                <>
+                  <SunIcon className="h-3.5 w-3.5 text-amber-400" />
+                  <span className="hidden sm:inline">Light</span>
+                </>
+              ) : (
+                <>
+                  <MoonIcon className="h-3.5 w-3.5 text-[var(--ink-muted)]" />
+                  <span className="hidden sm:inline">Dark</span>
+                </>
+              )}
+            </button>
+          )}
+
           <button
             type="button"
             onClick={onReset}
-            className="brutal-btn-outline inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-[#576356] hover:text-[#20251F]"
+            className="brutal-btn-outline inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-[var(--ink-muted)] hover:text-[var(--ink)] cursor-pointer"
             title="Reset to initial sample state"
           >
-            <RefreshCwIcon className="h-3.5 w-3.5 text-[#889386]" />
-            <span>Reset</span>
+            <RefreshCwIcon className="h-3.5 w-3.5 text-[var(--ink-subtle)]" />
+            <span className="hidden md:inline">Reset</span>
           </button>
         </div>
       </div>

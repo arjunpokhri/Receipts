@@ -66,35 +66,35 @@ export function AgreementLedger({
     switch (status) {
       case "baseline":
         return (
-          <span className="inline-flex items-center gap-1.5 border border-[#244D3A]/25 bg-[#EBF3EE] px-2 py-0.5 text-xs font-sans font-medium text-[#244D3A]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#244D3A]" />
+          <span className="inline-flex items-center gap-1.5 border border-[var(--forest)]/30 bg-[var(--forest-light)] px-2 py-0.5 text-xs font-sans font-medium text-[var(--forest)]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--forest)]" />
             Baseline
           </span>
         );
       case "confirmed":
         return (
-          <span className="inline-flex items-center gap-1.5 border border-[#2E7D5B]/30 bg-[#EBF5F0] px-2 py-0.5 text-xs font-sans font-medium text-[#2E7D5B]">
+          <span className="inline-flex items-center gap-1.5 border border-[var(--emerald-border)] bg-[var(--emerald-bg)] px-2 py-0.5 text-xs font-sans font-medium text-[var(--emerald-state)]">
             <CheckIcon className="h-3 w-3" />
             Confirmed
           </span>
         );
       case "proposed":
         return (
-          <span className="inline-flex items-center gap-1.5 border border-[#E8CA97] bg-[#FAF3E8] px-2 py-0.5 text-xs font-sans font-medium text-[#9A6518]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#C58A36]" />
+          <span className="inline-flex items-center gap-1.5 border border-[var(--amber-border)] bg-[var(--amber-bg)] px-2 py-0.5 text-xs font-sans font-medium text-[var(--amber-state)]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--amber-state)]" />
             Proposed
           </span>
         );
       case "unclear":
         return (
-          <span className="inline-flex items-center gap-1.5 border border-[#E8CA97] bg-[#FAF3E8] px-2 py-0.5 text-xs font-sans font-medium text-[#9A6518]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#C58A36]" />
+          <span className="inline-flex items-center gap-1.5 border border-[var(--amber-border)] bg-[var(--amber-bg)] px-2 py-0.5 text-xs font-sans font-medium text-[var(--amber-state)]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--amber-state)]" />
             Unclear
           </span>
         );
       case "dismissed":
         return (
-          <span className="inline-flex items-center gap-1.5 border border-[#EAB2A9] bg-[#FAEEEC] px-2 py-0.5 text-xs font-sans font-medium text-[#B04130]">
+          <span className="inline-flex items-center gap-1.5 border border-[var(--coral-border)] bg-[var(--coral-bg)] px-2 py-0.5 text-xs font-sans font-medium text-[var(--coral-state)]">
             <XIcon className="h-3 w-3" />
             Dismissed
           </span>
@@ -103,15 +103,15 @@ export function AgreementLedger({
   };
 
   return (
-    <div className="border border-[#20251F]/10 bg-white shadow-xs">
+    <div className="border border-[var(--surface-border)] bg-[var(--paper-card)] shadow-xs transition-colors">
       {/* Table Header & Controls */}
-      <div className="border-b border-[#20251F]/10 bg-[#F6F5F0]/70 p-4 sm:p-5">
+      <div className="border-b border-[var(--surface-border)] bg-[var(--surface-subtle)] p-4 sm:p-5 transition-colors">
         <div className="flex flex-col gap-3.5 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="font-serif text-lg font-bold text-[#20251F]">
+            <h2 className="font-serif text-lg font-bold text-[var(--ink)]">
               Agreement Ledger
             </h2>
-            <p className="text-xs text-[#576356] mt-0.5">
+            <p className="text-xs text-[var(--ink-muted)] mt-0.5">
               Canonical commitments of record, scope revisions, and pending terms verified against raw client logs.
             </p>
           </div>
@@ -122,32 +122,32 @@ export function AgreementLedger({
               <button
                 type="button"
                 onClick={onOpenExtractor}
-                className="inline-flex items-center gap-1.5 border border-[#20251F] bg-white px-3 py-1.5 text-xs font-semibold text-[#20251F] shadow-[1px_1px_0px_#20251F] hover:border-[#244D3A] hover:bg-[#E7EEE8] active:translate-x-0.5 active:translate-y-0.5 shrink-0"
+                className="inline-flex items-center gap-1.5 border border-[var(--ink)] bg-[var(--paper-card)] px-3 py-1.5 text-xs font-semibold text-[var(--ink)] shadow-[1px_1px_0px_var(--ink)] hover:border-[var(--forest)] hover:bg-[var(--forest-light)] active:translate-x-0.5 active:translate-y-0.5 shrink-0 cursor-pointer transition-colors"
                 title="Extract commitments from new client communication"
               >
-                <SparklesIcon className="h-3.5 w-3.5 text-[#244D3A]" />
+                <SparklesIcon className="h-3.5 w-3.5 text-[var(--forest)]" />
                 <span>Analyze Conversation</span>
               </button>
             )}
 
             {/* Search Box */}
             <div className="relative w-full sm:w-56 shrink-0">
-              <SearchIcon className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#889386]" />
+              <SearchIcon className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--ink-subtle)]" />
               <input
                 type="text"
                 placeholder="Search claims or quotes..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full border border-[#20251F]/15 bg-white py-1.5 pl-8 pr-3 text-xs text-[#20251F] placeholder:text-[#889386] focus:border-[#244D3A] focus:outline-hidden"
+                className="w-full border border-[var(--surface-border)] bg-[var(--paper-card)] py-1.5 pl-8 pr-3 text-xs text-[var(--ink)] placeholder:text-[var(--ink-subtle)] focus:border-[var(--forest)] focus:outline-hidden"
               />
             </div>
           </div>
         </div>
 
         {/* Filter Row */}
-        <div className="mt-3.5 flex flex-wrap items-center gap-2 pt-2.5 border-t border-[#20251F]/8">
-          <div className="flex items-center gap-1 text-xs font-medium text-[#576356] mr-1">
-            <FilterIcon className="h-3 w-3 text-[#889386]" />
+        <div className="mt-3.5 flex flex-wrap items-center gap-2 pt-2.5 border-t border-[var(--surface-border)]">
+          <div className="flex items-center gap-1 text-xs font-medium text-[var(--ink-muted)] mr-1">
+            <FilterIcon className="h-3 w-3 text-[var(--ink-subtle)]" />
             <span>Status:</span>
           </div>
           {(["all", "baseline", "confirmed", "proposed", "unclear", "dismissed"] as const).map(
@@ -156,10 +156,10 @@ export function AgreementLedger({
                 key={status}
                 type="button"
                 onClick={() => setStatusFilter(status)}
-                className={`px-2.5 py-1 text-xs capitalize transition-all ${
+                className={`px-2.5 py-1 text-xs capitalize transition-all cursor-pointer ${
                   statusFilter === status
-                    ? "border border-[#20251F] bg-[#20251F] font-medium text-white shadow-xs"
-                    : "border border-[#20251F]/15 bg-white text-[#576356] hover:border-[#20251F]/30 hover:bg-[#F6F5F0]"
+                    ? "border border-[var(--ink)] bg-[var(--ink)] font-medium text-[var(--paper)] shadow-xs"
+                    : "border border-[var(--surface-border)] bg-[var(--paper-card)] text-[var(--ink-muted)] hover:border-[var(--ink-subtle)] hover:bg-[var(--surface-subtle)]"
                 }`}
               >
                 {status}
@@ -167,9 +167,9 @@ export function AgreementLedger({
             )
           )}
 
-          <div className="mx-2 hidden h-4 w-px bg-[#20251F]/15 sm:block" />
+          <div className="mx-2 hidden h-4 w-px bg-[var(--surface-border)] sm:block" />
 
-          <div className="flex items-center gap-1 text-xs font-medium text-[#576356] mr-1">
+          <div className="flex items-center gap-1 text-xs font-medium text-[var(--ink-muted)] mr-1">
             <span>Type:</span>
           </div>
           {(["all", "deliverables", "prices", "deadlines", "revision_limits"] as const).map((type) => (
@@ -177,10 +177,10 @@ export function AgreementLedger({
               key={type}
               type="button"
               onClick={() => setTypeFilter(type)}
-              className={`px-2.5 py-1 text-xs capitalize transition-all ${
+              className={`px-2.5 py-1 text-xs capitalize transition-all cursor-pointer ${
                 typeFilter === type
-                  ? "border border-[#244D3A] bg-[#244D3A] font-medium text-white shadow-xs"
-                  : "border border-[#20251F]/15 bg-white text-[#576356] hover:border-[#20251F]/30 hover:bg-[#F6F5F0]"
+                  ? "border border-[var(--forest)] bg-[var(--forest)] font-medium text-white shadow-xs"
+                  : "border border-[var(--surface-border)] bg-[var(--paper-card)] text-[var(--ink-muted)] hover:border-[var(--ink-subtle)] hover:bg-[var(--surface-subtle)]"
               }`}
             >
               {type === "revision_limits" ? "Revisions" : type.replace("_", " ")}
@@ -193,20 +193,20 @@ export function AgreementLedger({
       <div className="overflow-x-auto relative table-scroll-container">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
-            <tr className="border-b border-[#20251F]/10 bg-[#E7EEE8]/60 text-xs font-semibold font-sans text-[#576356]">
+            <tr className="border-b border-[var(--surface-border)] bg-[var(--surface-subtle)] text-xs font-semibold font-sans text-[var(--ink-muted)]">
               <th className="py-3 pl-4 pr-3 min-w-[210px]">Commitment & Scope</th>
               <th className="px-3 py-3 w-24 min-w-[85px] whitespace-nowrap">Type</th>
               <th className="px-3 py-3 w-24 min-w-[85px] whitespace-nowrap">Status</th>
               <th className="px-3 py-3 min-w-[190px]">Verbatim Quotation & Source</th>
-              <th className="sticky right-0 z-20 bg-[#E7EEE8] py-3 pl-2.5 pr-4 text-right min-w-[148px] whitespace-nowrap border-l border-[#20251F]/10 shadow-[-4px_0_8px_-2px_rgba(32,37,31,0.06)]">
+              <th className="sticky right-0 z-20 bg-[var(--surface-subtle)] py-3 pl-2.5 pr-4 text-right min-w-[148px] whitespace-nowrap border-l border-[var(--surface-border)] shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.06)]">
                 Review Action
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#20251F]/8">
+          <tbody className="divide-y divide-[var(--surface-border)]">
             {filteredItems.length === 0 ? (
               <tr>
-                <td colSpan={5} className="py-8 text-center text-xs text-[#576356]">
+                <td colSpan={5} className="py-8 text-center text-xs text-[var(--ink-muted)]">
                   No commitments match your current filters.
                 </td>
               </tr>
@@ -222,8 +222,8 @@ export function AgreementLedger({
                     onClick={() => onSelectItem(item)}
                     className={`group/row cursor-pointer transition-colors ${
                       isSelected
-                        ? "bg-[#F3F6F3] border-l-2 border-[#244D3A]"
-                        : "hover:bg-[#F9F8F5]"
+                        ? "bg-[var(--forest-light)] border-l-2 border-[var(--forest)]"
+                        : "hover:bg-[var(--surface-subtle)]"
                     }`}
                   >
                     {/* Commitment Claim & Explanation */}
@@ -232,17 +232,17 @@ export function AgreementLedger({
                         <span
                           className={`mt-1 h-2 w-2 shrink-0 rounded-xs ${
                             item.status === "baseline" || item.status === "confirmed"
-                              ? "bg-[#2E7D5B]"
+                              ? "bg-[var(--emerald-state)]"
                               : item.status === "proposed" || item.status === "unclear"
-                              ? "bg-[#C58A36]"
-                              : "bg-[#C95C4B]"
+                              ? "bg-[var(--amber-state)]"
+                              : "bg-[var(--coral-state)]"
                           }`}
                         />
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs font-semibold text-[#20251F] leading-snug">
+                          <p className="text-xs font-semibold text-[var(--ink)] leading-snug">
                             {item.claim}
                           </p>
-                          <p className="mt-1 text-[11px] text-[#576356] leading-normal line-clamp-2">
+                          <p className="mt-1 text-[11px] text-[var(--ink-muted)] leading-normal line-clamp-2">
                             {item.explanation}
                           </p>
                         </div>
@@ -251,8 +251,8 @@ export function AgreementLedger({
 
                     {/* Commitment Type */}
                     <td className="px-3 py-3.5 align-top whitespace-nowrap">
-                      <span className="inline-flex items-center gap-1.5 text-xs font-sans text-[#576356]">
-                        <TypeIcon className="h-3.5 w-3.5 text-[#244D3A] shrink-0" />
+                      <span className="inline-flex items-center gap-1.5 text-xs font-sans text-[var(--ink-muted)]">
+                        <TypeIcon className="h-3.5 w-3.5 text-[var(--forest)] shrink-0" />
                         <span className="capitalize">
                           {item.commitmentType === "revision_limits" ? "Revisions" : item.commitmentType.replace("_", " ")}
                         </span>
@@ -267,11 +267,11 @@ export function AgreementLedger({
                     {/* Evidence Quote & Attribution Combined */}
                     <td className="px-3 py-3.5 align-top min-w-[190px]">
                       <div>
-                        <blockquote className="font-serif italic text-xs text-[#3D473C] leading-relaxed line-clamp-2">
+                        <blockquote className="font-serif italic text-xs text-[var(--ink)] leading-relaxed line-clamp-2">
                           “{item.evidenceQuote}”
                         </blockquote>
-                        <div className="mt-1 flex items-center gap-1.5 text-[10px] text-[#889386] font-mono">
-                          <span className="font-medium text-[#576356]">{item.speaker}</span>
+                        <div className="mt-1 flex items-center gap-1.5 text-[10px] text-[var(--ink-subtle)] font-mono">
+                          <span className="font-medium text-[var(--ink-muted)]">{item.speaker}</span>
                           <span>•</span>
                           <span>{item.timestamp}</span>
                         </div>
@@ -280,8 +280,8 @@ export function AgreementLedger({
 
                     {/* Sticky Review Action Column - Always Visible and Usable */}
                     <td
-                      className={`sticky right-0 z-10 py-3.5 pl-2.5 pr-4 align-top text-right min-w-[148px] whitespace-nowrap border-l border-[#20251F]/8 shadow-[-4px_0_8px_-2px_rgba(32,37,31,0.06)] transition-colors ${
-                        isSelected ? "bg-[#F3F6F3]" : "bg-white group-hover/row:bg-[#F9F8F5]"
+                      className={`sticky right-0 z-10 py-3.5 pl-2.5 pr-4 align-top text-right min-w-[148px] whitespace-nowrap border-l border-[var(--surface-border)] shadow-[-4px_0_8px_-2px_rgba(0,0,0,0.06)] transition-colors ${
+                        isSelected ? "bg-[var(--forest-light)]" : "bg-[var(--paper-card)] group-hover/row:bg-[var(--surface-subtle)]"
                       }`}
                     >
                       <div className="flex items-center justify-end gap-1.5">
@@ -293,7 +293,7 @@ export function AgreementLedger({
                                 e.stopPropagation();
                                 onConfirmItem(item.id);
                               }}
-                              className="inline-flex items-center gap-1 border border-[#2E7D5B]/50 bg-[#EBF5F0] px-2 py-1 text-xs font-medium text-[#2E7D5B] hover:bg-[#2E7D5B] hover:text-white transition-colors cursor-pointer"
+                              className="inline-flex items-center gap-1 border border-[var(--emerald-border)] bg-[var(--emerald-bg)] px-2 py-1 text-xs font-medium text-[var(--emerald-state)] hover:bg-[var(--emerald-state)] hover:text-white transition-colors cursor-pointer"
                               title="Human confirmation: Promote to confirmed agreement"
                             >
                               <CheckIcon className="h-3 w-3" />
@@ -305,7 +305,7 @@ export function AgreementLedger({
                                 e.stopPropagation();
                                 onDismissItem(item.id);
                               }}
-                              className="inline-flex items-center gap-1 border border-[#C95C4B]/40 bg-white px-2 py-1 text-xs font-medium text-[#C95C4B] hover:bg-[#FAEEEC] transition-colors cursor-pointer"
+                              className="inline-flex items-center gap-1 border border-[var(--coral-border)] bg-[var(--paper-card)] px-2 py-1 text-xs font-medium text-[var(--coral-state)] hover:bg-[var(--coral-bg)] transition-colors cursor-pointer"
                               title="Dismiss from active ledger"
                             >
                               <XIcon className="h-3 w-3" />
@@ -321,14 +321,14 @@ export function AgreementLedger({
                               e.stopPropagation();
                               onRestoreItem(item.id);
                             }}
-                            className="inline-flex items-center gap-1 border border-[#20251F]/20 bg-white px-2 py-0.5 text-xs text-[#20251F] hover:bg-[#F6F5F0] cursor-pointer"
+                            className="inline-flex items-center gap-1 border border-[var(--surface-border)] bg-[var(--paper-card)] px-2 py-0.5 text-xs text-[var(--ink)] hover:bg-[var(--surface-subtle)] cursor-pointer"
                           >
                             <span>Restore</span>
                           </button>
                         )}
 
                         {!isPending && item.status !== "dismissed" && (
-                          <span className="text-[11px] text-[#889386] font-sans mr-1">
+                          <span className="text-[11px] text-[var(--ink-subtle)] font-sans mr-1">
                             {item.status === "confirmed" ? "Confirmed" : "Baseline"}
                           </span>
                         )}
@@ -339,11 +339,11 @@ export function AgreementLedger({
                             e.stopPropagation();
                             onSelectItem(item);
                           }}
-                          className="inline-flex items-center justify-center h-7 w-7 border border-[#20251F]/15 bg-white text-[#576356] shadow-[1px_1px_0px_#20251F] hover:border-[#244D3A] hover:bg-[#244D3A] hover:text-white active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer shrink-0"
+                          className="inline-flex items-center justify-center h-7 w-7 border border-[var(--surface-border)] bg-[var(--paper-card)] text-[var(--ink-muted)] shadow-[1px_1px_0px_var(--surface-border)] hover:border-[var(--forest)] hover:bg-[var(--forest)] hover:text-white active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer shrink-0"
                           title="Inspect verbatim evidence in source conversation"
                           aria-label={`Inspect evidence for ${item.claim}`}
                         >
-                          <ChevronRightIcon className="h-4 w-4" />
+                          <ChevronRightIcon className="h-4 w-4 transition-transform group-hover/row:translate-x-0.5" />
                         </button>
                       </div>
                     </td>
@@ -356,14 +356,14 @@ export function AgreementLedger({
       </div>
 
       {/* Table Footer with Legend */}
-      <div className="flex flex-wrap items-center justify-between border-t border-[#20251F]/10 bg-[#F6F5F0]/70 px-4 py-2.5 text-xs text-[#576356]">
+      <div className="flex flex-wrap items-center justify-between border-t border-[var(--surface-border)] bg-[var(--surface-subtle)] px-4 py-2.5 text-xs text-[var(--ink-muted)] transition-colors">
         <div className="flex items-center gap-3">
           <span>Showing {filteredItems.length} of {items.length} records</span>
-          <span className="hidden sm:inline text-[#889386]">•</span>
-          <span className="hidden sm:inline text-[#889386]">Click any row to open the Evidence Inspector</span>
+          <span className="hidden sm:inline text-[var(--ink-subtle)]">•</span>
+          <span className="hidden sm:inline text-[var(--ink-subtle)]">Click any row to open the Evidence Inspector</span>
         </div>
         <div className="flex items-center gap-1.5 text-xs">
-          <ShieldCheckIcon className="h-3.5 w-3.5 text-[#244D3A]" />
+          <ShieldCheckIcon className="h-3.5 w-3.5 text-[var(--forest)]" />
           <span>Human-confirmed updates only</span>
         </div>
       </div>

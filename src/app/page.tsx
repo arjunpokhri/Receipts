@@ -27,10 +27,63 @@ import {
 export default function Home() {
   const [project] = useState(SAMPLE_PROJECT);
   const [items, setItems] = useState<AgreementItem[]>(SAMPLE_PROJECT.initialItems);
-  const [activeTab, setActiveTab] = useState<ActiveTab>("ledger");
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(items[0]?.id || null);
+  const [activeTab, setActiveTab] = useState<ActiveTab>("overview");
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(
+    SAMPLE_PROJECT.initialItems[0]?.id || null
+  );
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isStorageInitialized, setIsStorageInitialized] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  // Restore theme, sidebar, and persisted ledger state on initial client mount
+  useEffect(() => {
+    try {
+      const savedTheme = localStorage.getItem("receipts-theme");
+      const isDark = savedTheme
+        ? savedTheme === "dark"
+        : window.matchMedia("(prefers-color-scheme: dark)").matches;
+      queueMicrotask(() => {
+        setTheme(isDark ? "dark" : "light");
+      });
+      if (isDark) {
+        document.documentElement.classList.add("dark");
+        document.documentElement.setAttribute("data-theme", "dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+
+      const savedSidebar = localStorage.getItem("receipts-sidebar-collapsed");
+      if (savedSidebar === "true") {
+        queueMicrotask(() => {
+          setIsSidebarCollapsed(true);
+        });
+      }
+    } catch {
+      // Ignore storage read exceptions in sandboxed or private browser modes
+    }
+  }, []);
+
+  // Keyboard shortcut Ctrl+B / Cmd+B for collapsing sidebar
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        setIsSidebarCollapsed((prev) => {
+          const next = !prev;
+          try {
+            localStorage.setItem("receipts-sidebar-collapsed", String(next));
+          } catch {
+            // ignore storage errors
+          }
+          return next;
+        });
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   // Restore persisted ledger state on initial client mount
   useEffect(() => {
@@ -61,7 +114,38 @@ export default function Home() {
     }
   }, [items, selectedItemId, isStorageInitialized]);
 
-  const selectedItem = items.find((i) => i.id === selectedItemId) || null;
+  const handleToggleTheme = () => {
+    setTheme((prev) => {
+      const next = prev === "light" ? "dark" : "light";
+      try {
+        localStorage.setItem("receipts-theme", next);
+      } catch {
+        // ignore
+      }
+      if (next === "dark") {
+        document.documentElement.classList.add("dark");
+        document.documentElement.setAttribute("data-theme", "dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+      return next;
+    });
+  };
+
+  const handleToggleSidebar = () => {
+    setIsSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("receipts-sidebar-collapsed", String(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  };
+
+  const selectedItem = items.find((i) => i.id === selectedItemId) || items[0] || null;
 
   // Calculate verified items count against each item's authoritative source text
   const verifiedCount = items.filter((item) => {
@@ -130,8 +214,8 @@ export default function Home() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#F6F5F0] text-[#20251F] font-sans antialiased">
-      {/* Persistent Left Sidebar */}
+    <div className="flex h-screen w-screen overflow-hidden bg-[var(--paper)] text-[var(--ink)] font-sans antialiased transition-colors">
+      {/* Persistent Left Sidebar (Fixed / Desktop with collapse, Modal / Mobile) */}
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -139,11 +223,13 @@ export default function Home() {
         totalCount={items.length}
         isMobileOpen={isMobileOpen}
         setIsMobileOpen={setIsMobileOpen}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={handleToggleSidebar}
       />
 
       {/* Main Workspace Area */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Project Header */}
+      <div className="flex flex-1 flex-col h-full overflow-hidden">
+        {/* Project Header (Persistent at top of main workspace) */}
         <Header
           project={project}
           items={items}
@@ -151,22 +237,32 @@ export default function Home() {
           onNavigateToTab={(tab) => setActiveTab(tab)}
           onReset={handleReset}
           onOpenMobileMenu={() => setIsMobileOpen(true)}
+          theme={theme}
+          onToggleTheme={handleToggleTheme}
+          isSidebarCollapsed={isSidebarCollapsed}
+          onToggleSidebar={handleToggleSidebar}
         />
 
-        {/* Scrollable Main Content */}
+        {/* Scrollable Main Content (Independently scrollable) */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6 space-y-5">
-          {/* Top Bento Overview */}
-          <BentoOverview
-            items={items}
-            verifiedCount={verifiedCount}
-            onSelectTab={(tab) => {
-              setActiveTab(tab);
-            }}
-          />
+          {/* 1. Home / Overview Dashboard View */}
+          {activeTab === "overview" && (
+            <div className="animate-fade-in">
+              <BentoOverview
+                items={items}
+                verifiedCount={verifiedCount}
+                onSelectTab={(tab) => setActiveTab(tab)}
+                onSelectItem={(item) => {
+                  setSelectedItemId(item.id);
+                  setActiveTab("evidence");
+                }}
+              />
+            </div>
+          )}
 
-          {/* Tab Content Display */}
+          {/* 2. Agreement Ledger View */}
           {activeTab === "ledger" && (
-            <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
+            <div className="grid grid-cols-1 gap-5 xl:grid-cols-12 animate-fade-in">
               <div className={selectedItem ? "xl:col-span-8" : "xl:col-span-12"}>
                 <AgreementLedger
                   items={items}
@@ -182,6 +278,8 @@ export default function Home() {
                 <div className="hidden xl:block xl:col-span-4">
                   <EvidenceInspector
                     item={selectedItem}
+                    allItems={items}
+                    onSelectItem={(it) => setSelectedItemId(it.id)}
                     threads={project.threads}
                     onClose={() => setSelectedItemId(null)}
                     onConfirmItem={handleConfirmItem}
@@ -192,20 +290,26 @@ export default function Home() {
             </div>
           )}
 
+          {/* 3. Scope & Request Review View */}
           {activeTab === "review" && (
-            <RequestReview
-              items={items}
-              onSelectItem={handleSelectItem}
-              onConfirmItem={handleConfirmItem}
-              onDismissItem={handleDismissItem}
-              onDraftForPending={() => setActiveTab("draft")}
-            />
+            <div className="max-w-5xl mx-auto animate-fade-in">
+              <RequestReview
+                items={items}
+                onSelectItem={handleSelectItem}
+                onConfirmItem={handleConfirmItem}
+                onDismissItem={handleDismissItem}
+                onDraftForPending={() => setActiveTab("draft")}
+              />
+            </div>
           )}
 
+          {/* 4. Evidence Inspector Dedicated View */}
           {activeTab === "evidence" && (
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-4xl mx-auto animate-fade-in">
               <EvidenceInspector
                 item={selectedItem}
+                allItems={items}
+                onSelectItem={(it) => setSelectedItemId(it.id)}
                 threads={project.threads}
                 onClose={() => setActiveTab("ledger")}
                 onConfirmItem={handleConfirmItem}
@@ -214,8 +318,9 @@ export default function Home() {
             </div>
           )}
 
+          {/* 5. Clarification Reply Draft View */}
           {activeTab === "draft" && (
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-4xl mx-auto animate-fade-in">
               <ReplyDraftPanel
                 project={project}
                 items={items}
@@ -224,8 +329,9 @@ export default function Home() {
             </div>
           )}
 
+          {/* 6. Execution Audit Trace View */}
           {activeTab === "trace" && (
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-4xl mx-auto animate-fade-in">
               <ExecutionTracePanel
                 items={items}
                 threads={project.threads}
@@ -233,8 +339,9 @@ export default function Home() {
             </div>
           )}
 
+          {/* 7. Analyze Conversation Hub View */}
           {activeTab === "custom" && (
-            <div className="max-w-5xl mx-auto">
+            <div className="max-w-5xl mx-auto animate-fade-in">
               <CustomTextVerifier
                 onAddCandidateToLedger={handleAddLiveCandidate}
                 onNavigateToLedger={(itemId) => {

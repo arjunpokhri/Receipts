@@ -76,19 +76,19 @@ export function ReplyDraftPanel({
   };
 
   return (
-    <div className="border border-[#20251F]/10 bg-white shadow-xs">
+    <div className="border border-[var(--surface-border)] bg-[var(--paper-card)] shadow-xs transition-colors">
       {/* Header */}
-      <div className="border-b border-[#20251F]/10 bg-[#F6F5F0]/70 p-4 sm:p-5">
+      <div className="border-b border-[var(--surface-border)] bg-[var(--surface-subtle)] p-4 sm:p-5 transition-colors">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center border border-[#20251F]/15 bg-white text-[#244D3A]">
+            <div className="flex h-8 w-8 items-center justify-center border border-[var(--surface-border)] bg-[var(--paper-card)] text-[var(--forest)]">
               <MessageSquareIcon className="h-4 w-4" />
             </div>
             <div>
-              <h2 className="font-serif text-lg font-bold text-[#20251F]">
+              <h2 className="font-serif text-lg font-bold text-[var(--ink)]">
                 Clarification Reply Draft
               </h2>
-              <p className="text-xs text-[#576356] mt-0.5">
+              <p className="text-xs text-[var(--ink-muted)] mt-0.5">
                 Non-confrontational, evidence-grounded copy ready to paste into Slack or email.
               </p>
             </div>
@@ -99,8 +99,8 @@ export function ReplyDraftPanel({
               type="button"
               onClick={handleResetDraft}
               disabled={!currentItem || isDismissed}
-              className={`brutal-btn-outline inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-[#576356] ${
-                !currentItem || isDismissed ? "opacity-50 cursor-not-allowed" : ""
+              className={`brutal-btn-outline inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-[var(--ink-muted)] ${
+                !currentItem || isDismissed ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
               }`}
               title="Reset to default template"
             >
@@ -112,7 +112,7 @@ export function ReplyDraftPanel({
               onClick={handleCopy}
               disabled={!draftContent.trim() || isDismissed}
               className={`brutal-btn-primary inline-flex items-center gap-1.5 px-4 py-1.5 text-xs ${
-                !draftContent.trim() || isDismissed ? "opacity-50 cursor-not-allowed" : ""
+                !draftContent.trim() || isDismissed ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
               }`}
             >
               {copied ? (
@@ -132,8 +132,8 @@ export function ReplyDraftPanel({
 
         {/* Pending Scope Selector Tabs */}
         {pendingItems.length > 0 && (
-          <div className="mt-3.5 flex flex-wrap items-center gap-2 pt-2 border-t border-[#20251F]/8">
-            <span className="text-xs font-sans font-medium text-[#889386]">
+          <div className="mt-3.5 flex flex-wrap items-center gap-2 pt-2 border-t border-[var(--surface-border)]">
+            <span className="text-xs font-sans font-medium text-[var(--ink-subtle)]">
               Quick Select Pending:
             </span>
             {pendingItems.map((item) => (
@@ -141,10 +141,10 @@ export function ReplyDraftPanel({
                 key={item.id}
                 type="button"
                 onClick={() => setActiveItemIdOverride(item.id)}
-                className={`truncate max-w-xs px-2.5 py-1 text-xs transition-all ${
+                className={`truncate max-w-xs px-2.5 py-1 text-xs transition-all cursor-pointer ${
                   (currentItem?.id === item.id)
-                    ? "border border-[#244D3A] bg-[#244D3A] font-medium text-white shadow-xs"
-                    : "border border-[#20251F]/15 bg-white text-[#576356] hover:border-[#20251F]/30"
+                    ? "border border-[var(--forest)] bg-[var(--forest)] font-medium text-white shadow-xs"
+                    : "border border-[var(--surface-border)] bg-[var(--paper-card)] text-[var(--ink-muted)] hover:border-[var(--ink-subtle)] hover:bg-[var(--surface-subtle)]"
                 }`}
               >
                 {item.claim}
@@ -158,30 +158,30 @@ export function ReplyDraftPanel({
       <div className="p-4 sm:p-5">
         {currentItem ? (
           <>
-            <div className="mb-3.5 border border-[#E8CA97] bg-[#FAF3E8]/60 p-3 text-xs">
-              <div className="flex items-center justify-between text-xs font-sans text-[#9A6518]">
+            <div className="mb-3.5 border border-[var(--amber-border)] bg-[var(--amber-bg)]/60 p-3 text-xs">
+              <div className="flex items-center justify-between text-xs font-sans text-[var(--amber-state)]">
                 <span className="font-medium">
                   Referencing Evidence ({getStatusLabel(currentItem.status)}):
                 </span>
                 <span>
-                  Speaker: <strong className="text-[#20251F] font-medium">{currentItem.speaker || "Not specified"}</strong>
+                  Speaker: <strong className="text-[var(--ink)] font-medium">{currentItem.speaker || "Not specified"}</strong>
                 </span>
               </div>
-              <p className="mt-1 font-serif italic text-xs text-[#20251F] leading-relaxed">
+              <p className="mt-1 font-serif italic text-xs text-[var(--ink)] leading-relaxed">
                 “{currentItem.evidenceQuote || "[No quotation available]"}”
               </p>
             </div>
 
             {isDismissed && (
-              <div className="mb-3.5 border border-[#20251F]/15 bg-[#FAF3E8]/40 p-3.5 text-xs text-[#576356]">
-                <span className="font-semibold text-[#20251F]">Dismissed item:</span> Dismissed items have no draft and must be restored first.
+              <div className="mb-3.5 border border-[var(--surface-border)] bg-[var(--amber-bg)]/40 p-3.5 text-xs text-[var(--ink-muted)]">
+                <span className="font-semibold text-[var(--ink)]">Dismissed item:</span> Dismissed items have no draft and must be restored first.
               </div>
             )}
           </>
         ) : (
-          <div className="mb-3.5 border border-dashed border-[#20251F]/20 bg-[#F6F5F0]/60 p-6 text-center">
-            <p className="text-sm font-medium text-[#20251F]">No Agreement Item Selected</p>
-            <p className="mt-1 text-xs text-[#576356]">
+          <div className="mb-3.5 border border-dashed border-[var(--surface-border)] bg-[var(--surface-subtle)]/60 p-6 text-center">
+            <p className="text-sm font-medium text-[var(--ink)]">No Agreement Item Selected</p>
+            <p className="mt-1 text-xs text-[var(--ink-muted)]">
               Select an agreement item from the ledger or choose a pending item above to generate a clarification reply draft.
             </p>
           </div>
@@ -193,8 +193,8 @@ export function ReplyDraftPanel({
             value={draftContent}
             onChange={(e) => handleChangeText(e.target.value)}
             disabled={!currentItem || isDismissed}
-            className={`w-full border border-[#20251F]/15 bg-white p-3.5 font-sans text-xs text-[#20251F] leading-relaxed focus:border-[#244D3A] focus:outline-hidden ${
-              !currentItem || isDismissed ? "bg-[#F6F5F0]/30 text-[#889386] cursor-not-allowed" : ""
+            className={`w-full border border-[var(--surface-border)] bg-[var(--paper-card)] p-3.5 font-sans text-xs text-[var(--ink)] leading-relaxed focus:border-[var(--forest)] focus:outline-hidden ${
+              !currentItem || isDismissed ? "bg-[var(--surface-subtle)]/40 text-[var(--ink-subtle)] cursor-not-allowed" : ""
             }`}
             placeholder={
               isDismissed
@@ -207,7 +207,7 @@ export function ReplyDraftPanel({
         </div>
 
         {/* Editor Footer */}
-        <div className="mt-2.5 flex flex-wrap items-center justify-between text-xs text-[#889386]">
+        <div className="mt-2.5 flex flex-wrap items-center justify-between text-xs text-[var(--ink-subtle)]">
           <span>{draftContent.length} characters • {draftContent.split(/\s+/).filter(Boolean).length} words</span>
           <span>Editable text buffer. Never sent automatically to client.</span>
         </div>
