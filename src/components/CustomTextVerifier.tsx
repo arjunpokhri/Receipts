@@ -192,29 +192,29 @@ export function CustomTextVerifier({
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="border border-[var(--surface-border)] bg-[var(--paper-card)] p-5 shadow-xs transition-colors">
+      <div className="rounded-3xl border border-black/[0.06] dark:border-white/[0.08] bg-white/80 dark:bg-[#181E1A]/80 backdrop-blur-md p-6 sm:p-7 shadow-md transition-colors">
         <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center border border-[var(--surface-border)] bg-[var(--surface-subtle)] text-[var(--forest)]">
-              <SparklesIcon className="h-4.5 w-4.5" />
+          <div className="flex items-start gap-3.5">
+            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--forest)]/20 bg-[var(--forest-light)] text-[var(--forest)] shadow-2xs">
+              <SparklesIcon className="h-5 w-5 text-amber-500" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="font-serif text-lg font-bold text-[var(--ink)]">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="font-serif text-lg sm:text-xl font-bold text-[var(--ink)]">
                   Source Analysis & Extraction Hub
                 </h2>
-                <span className="inline-flex items-center border border-[var(--forest)]/25 bg-[var(--forest-light)] px-2 py-0.5 text-[10px] font-sans font-medium text-[var(--forest)]">
+                <span className="inline-flex items-center rounded-full border border-[var(--forest)]/20 bg-[var(--forest-light)]/80 px-2.5 py-0.5 text-[10px] font-sans font-medium text-[var(--forest)] shadow-2xs">
                   Nebius Token Factory
                 </span>
               </div>
-              <p className="text-xs text-[var(--ink-muted)] leading-relaxed mt-1">
+              <p className="text-xs text-[var(--ink-muted)] leading-relaxed mt-1 max-w-2xl">
                 Extract commitments using Nebius-hosted NVIDIA Nemotron and verify verbatim evidence against the original client communication.
               </p>
             </div>
           </div>
         </div>
 
-        <div className="mt-3.5 border border-[var(--surface-border)] bg-[var(--surface-subtle)] p-3 text-xs flex items-start gap-2 text-[var(--ink-muted)]">
+        <div className="mt-4 rounded-2xl border border-black/[0.06] dark:border-white/[0.08] bg-[var(--surface-subtle)]/70 p-3.5 text-xs flex items-start gap-2.5 text-[var(--ink-muted)]">
           <InfoIcon className="h-4 w-4 shrink-0 text-[var(--forest)] mt-0.5" />
           <div className="text-[11px] leading-relaxed">
             <strong>Human Agency Safeguard:</strong> The model suggests only preliminary statuses (<code>baseline</code>, <code>proposed</code>, <code>unclear</code>). Terminal confirmation and ledger updates require explicit human action.
@@ -223,7 +223,7 @@ export function CustomTextVerifier({
       </div>
 
       {/* Primary Input: Raw Source Communication */}
-      <div className="border border-[var(--surface-border)] bg-[var(--paper-card)] p-5 shadow-xs space-y-3 transition-colors">
+      <div className="rounded-3xl border border-black/[0.06] dark:border-white/[0.08] bg-white dark:bg-[#181E1A] p-6 sm:p-8 shadow-lg space-y-4 transition-colors">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <label className="text-xs font-semibold font-sans text-[var(--ink)]">
@@ -233,86 +233,154 @@ export function CustomTextVerifier({
               Paste email threads, chat transcripts, or client scope notes below.
             </span>
           </div>
-          <div className="text-[11px] font-mono text-[var(--ink-subtle)]">
+          <div className="text-[11px] font-mono text-[var(--ink-subtle)] bg-[var(--surface-subtle)] px-2.5 py-1 rounded-full">
             {sourceText.length} chars • {sourceText.split(/\s+/).filter(Boolean).length} words
           </div>
         </div>
 
-        {/* Preset Aura Health demo scenarios */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-          <span className="text-[11px] font-sans font-medium text-[var(--ink-muted)] mr-1">
-            Aura Health Demo Presets:
-          </span>
-          <button
-            type="button"
-            onClick={() => {
-              setSourceText(AURA_PRESET_1_TEXT);
-              setTestQuote(AURA_PRESET_1_QUOTE);
-              setSnapshotSession(null);
-              setExtractionError(null);
-              setLastAddedItem(null);
-            }}
-            className="border border-[var(--surface-border)] bg-[var(--surface-subtle)] px-2 py-0.5 text-[11px] font-sans text-[var(--ink)] hover:border-[var(--forest)] hover:bg-[var(--forest-light)] transition-colors cursor-pointer"
-          >
-            Mobile Nav Drawer ($650)
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setSourceText(AURA_PRESET_2_TEXT);
-              setTestQuote(AURA_PRESET_2_QUOTE);
-              setSnapshotSession(null);
-              setExtractionError(null);
-              setLastAddedItem(null);
-            }}
-            className="border border-[var(--surface-border)] bg-[var(--surface-subtle)] px-2 py-0.5 text-[11px] font-sans text-[var(--ink)] hover:border-[var(--forest)] hover:bg-[var(--forest-light)] transition-colors cursor-pointer"
-          >
-            Interactive 3D Viewer Request
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setSourceText(AURA_PRESET_3_TEXT);
-              setTestQuote(AURA_PRESET_3_QUOTE);
-              setSnapshotSession(null);
-              setExtractionError(null);
-              setLastAddedItem(null);
-            }}
-            className="border border-[var(--surface-border)] bg-[var(--surface-subtle)] px-2 py-0.5 text-[11px] font-sans text-[var(--ink)] hover:border-[var(--forest)] hover:bg-[var(--forest-light)] transition-colors cursor-pointer"
-          >
-            Weekend Maintenance Slack
-          </button>
+        {/* Scenario Selection Grid */}
+        <div className="space-y-2 pt-1">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-xs">
+            <span className="font-semibold text-[var(--ink)]">
+              Choose a Real-World Client Scenario (or paste custom text below):
+            </span>
+            <span className="text-[11px] text-[var(--ink-muted)]">
+              Click to load realistic client correspondence
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {/* Scenario 1 */}
+            <button
+              type="button"
+              onClick={() => {
+                setSourceText(AURA_PRESET_1_TEXT);
+                setTestQuote(AURA_PRESET_1_QUOTE);
+                setSnapshotSession(null);
+                setExtractionError(null);
+                setLastAddedItem(null);
+              }}
+              className={`p-4 rounded-2xl text-left border transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-md ${
+                sourceText === AURA_PRESET_1_TEXT
+                  ? "border-[var(--forest)] bg-[var(--forest-light)]/60 shadow-sm ring-1 ring-[var(--forest)]"
+                  : "border-black/[0.06] dark:border-white/[0.08] bg-[var(--surface-subtle)]/70 hover:border-[var(--forest)]/40 hover:bg-white dark:hover:bg-[#121614]"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-1 mb-1.5">
+                <span className="inline-flex items-center gap-1 text-[10px] font-sans font-semibold text-[var(--forest)] uppercase tracking-wider">
+                  <span>Scope Addition</span>
+                </span>
+                <span className="font-mono text-[10px] font-bold text-[var(--forest)] bg-[var(--forest-light)] px-1.5 py-0.5 rounded-full">+$650</span>
+              </div>
+              <div className="font-sans text-xs font-bold text-[var(--ink)]">
+                Mobile Nav Drawer
+              </div>
+              <p className="mt-1 text-[11px] text-[var(--ink-muted)] leading-relaxed line-clamp-2">
+                Elena agrees to $650 addition for slide-out mobile menu.
+              </p>
+            </button>
+
+            {/* Scenario 2 */}
+            <button
+              type="button"
+              onClick={() => {
+                setSourceText(AURA_PRESET_2_TEXT);
+                setTestQuote(AURA_PRESET_2_QUOTE);
+                setSnapshotSession(null);
+                setExtractionError(null);
+                setLastAddedItem(null);
+              }}
+              className={`p-4 rounded-2xl text-left border transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-md ${
+                sourceText === AURA_PRESET_2_TEXT
+                  ? "border-[var(--amber-state)] bg-[var(--amber-bg)] shadow-sm ring-1 ring-[var(--amber-state)]"
+                  : "border-black/[0.06] dark:border-white/[0.08] bg-[var(--surface-subtle)]/70 hover:border-[var(--amber-state)]/50 hover:bg-white dark:hover:bg-[#121614]"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-1 mb-1.5">
+                <span className="inline-flex items-center gap-1 text-[10px] font-sans font-semibold text-[var(--amber-state)] uppercase tracking-wider">
+                  <span>Scope Drift</span>
+                </span>
+                <span className="font-mono text-[10px] font-semibold text-[var(--amber-state)] bg-amber-100 dark:bg-amber-950/60 px-1.5 py-0.5 rounded-full">Unapproved</span>
+              </div>
+              <div className="font-sans text-xs font-bold text-[var(--ink)]">
+                3D Product Viewer
+              </div>
+              <p className="mt-1 text-[11px] text-[var(--ink-muted)] leading-relaxed line-clamp-2">
+                Greg requests a major 3D module right before launch without pricing.
+              </p>
+            </button>
+
+            {/* Scenario 3 */}
+            <button
+              type="button"
+              onClick={() => {
+                setSourceText(AURA_PRESET_3_TEXT);
+                setTestQuote(AURA_PRESET_3_QUOTE);
+                setSnapshotSession(null);
+                setExtractionError(null);
+                setLastAddedItem(null);
+              }}
+              className={`p-4 rounded-2xl text-left border transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-md ${
+                sourceText === AURA_PRESET_3_TEXT
+                  ? "border-[var(--coral-state)] bg-[var(--coral-bg)] shadow-sm ring-1 ring-[var(--coral-state)]"
+                  : "border-black/[0.06] dark:border-white/[0.08] bg-[var(--surface-subtle)]/70 hover:border-[var(--coral-state)]/50 hover:bg-white dark:hover:bg-[#121614]"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-1 mb-1.5">
+                <span className="inline-flex items-center gap-1 text-[10px] font-sans font-semibold text-[var(--coral-state)] uppercase tracking-wider">
+                  <span>Rate Conflict</span>
+                </span>
+                <span className="font-mono text-[10px] font-semibold text-[var(--coral-state)] bg-red-100 dark:bg-red-950/60 px-1.5 py-0.5 rounded-full">$100 vs $150</span>
+              </div>
+              <div className="font-sans text-xs font-bold text-[var(--ink)]">
+                Weekend SLA Maintenance
+              </div>
+              <p className="mt-1 text-[11px] text-[var(--ink-muted)] leading-relaxed line-clamp-2">
+                Client counters $100/hr in Slack against $150 standard rate.
+              </p>
+            </button>
+          </div>
         </div>
 
         <textarea
           rows={8}
           value={sourceText}
           onChange={(e) => setSourceText(e.target.value)}
-          className="w-full border border-[var(--surface-border)] bg-[var(--paper-card)] p-3 font-mono text-xs text-[var(--ink)] focus:border-[var(--forest)] focus:outline-hidden"
+          className="w-full rounded-2xl border border-black/[0.08] dark:border-white/[0.1] bg-[var(--paper)]/90 p-4 font-mono text-xs text-[var(--ink)] focus:border-[var(--forest)] focus:ring-2 focus:ring-[var(--forest)]/20 focus:outline-hidden transition-all shadow-inner"
           placeholder="Paste raw email, Slack transcript, or contract text..."
         />
 
         {/* Action Bar for Live Extraction */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-[var(--surface-border)]">
-          <div className="text-[11px] text-[var(--ink-muted)]">
-            Server route: <code>POST /api/extract</code> • Model: <code>nvidia/Nemotron-3_5-Lightning</code>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t border-black/[0.06] dark:border-white/[0.08]">
+          <div className="flex items-center gap-2 text-xs">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--emerald-state)] opacity-75"></span>
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--emerald-state)]"></span>
+            </span>
+            <span className="font-semibold text-[var(--ink)]">
+              Backend Ready:
+            </span>
+            <span className="font-mono text-[11px] text-[var(--forest)] bg-[var(--forest-light)] px-2.5 py-0.5 rounded-full border border-[var(--forest)]/20">
+              nvidia/Nemotron-3_5-Lightning
+            </span>
           </div>
 
           <button
             type="button"
             onClick={handleRunLiveExtraction}
             disabled={isExtracting || sourceText.trim().length === 0}
-            className="inline-flex items-center gap-2 border border-[var(--ink)] bg-[var(--forest)] px-4 py-2 text-xs font-semibold text-white shadow-[1px_1px_0px_var(--ink)] transition-all hover:bg-[var(--forest-hover)] active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--forest)] to-[#1B3F2E] px-6 py-2.5 text-xs font-semibold text-white shadow-md shadow-[var(--forest)]/20 transition-all hover:shadow-lg hover:shadow-[var(--forest)]/30 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {isExtracting ? (
               <>
-                <RefreshCwIcon className="h-3.5 w-3.5 animate-spin" />
-                <span>Extracting via Nebius...</span>
+                <RefreshCwIcon className="h-4 w-4 animate-spin" />
+                <span>Extracting via Nebius Token Factory...</span>
               </>
             ) : (
               <>
-                <SparklesIcon className="h-3.5 w-3.5 text-amber-300" />
+                <SparklesIcon className="h-4 w-4 text-amber-300" />
                 <span>Extract Commitments with Nebius</span>
+                <ArrowRightIcon className="h-3.5 w-3.5" />
               </>
             )}
           </button>
@@ -321,8 +389,8 @@ export function CustomTextVerifier({
 
       {/* Live Model Extraction Results Panel */}
       {isExtracting && (
-        <div className="border border-[var(--surface-border)] bg-[var(--paper-card)] p-6 sm:p-8 shadow-sm space-y-4 animate-fade-in">
-          <div className="flex flex-wrap items-center justify-between border-b border-[var(--surface-border)] pb-3 gap-2">
+        <div className="rounded-3xl border border-black/[0.06] dark:border-white/[0.08] bg-white dark:bg-[#181E1A] p-6 sm:p-8 shadow-xl space-y-5 animate-fade-in">
+          <div className="flex flex-wrap items-center justify-between border-b border-black/[0.06] dark:border-white/[0.08] pb-4 gap-2">
             <div className="flex items-center gap-2.5">
               <span className="relative flex h-2.5 w-2.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--forest)] opacity-75"></span>
@@ -332,33 +400,33 @@ export function CustomTextVerifier({
                 Extracting Scope Commitments via Nebius Token Factory
               </h3>
             </div>
-            <span className="font-mono text-xs text-[var(--forest)] font-semibold">
+            <span className="font-mono text-xs text-[var(--forest)] font-semibold bg-[var(--forest-light)] px-3 py-1 rounded-full">
               nvidia/Nemotron-3_5-Lightning
             </span>
           </div>
 
           <div className="space-y-2">
-            <div className="h-1.5 w-full bg-[var(--surface-subtle)] overflow-hidden">
-              <div className="h-full w-full animate-shimmer bg-gradient-to-r from-[var(--forest)]/20 via-[var(--forest)] to-[var(--forest)]/20" />
+            <div className="h-2 w-full bg-[var(--surface-subtle)] rounded-full overflow-hidden">
+              <div className="h-full w-full animate-shimmer bg-gradient-to-r from-[var(--forest)]/20 via-[var(--forest)] to-[var(--forest)]/20 rounded-full" />
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
-            <div className="border border-[var(--surface-border)] bg-[var(--surface-subtle)] p-3 flex items-start gap-2">
+            <div className="rounded-2xl border border-black/[0.06] dark:border-white/[0.08] bg-[var(--surface-subtle)]/70 p-3.5 flex items-start gap-2.5">
               <CheckIcon className="h-4 w-4 text-[var(--emerald-state)] shrink-0 mt-0.5" />
               <div>
                 <span className="font-semibold text-[var(--ink)]">1. Prompt Sandboxing</span>
                 <p className="text-[11px] text-[var(--ink-muted)] mt-0.5">Source wrapped in untrusted tags</p>
               </div>
             </div>
-            <div className="border border-[var(--forest)]/40 bg-[var(--forest-light)] p-3 flex items-start gap-2">
+            <div className="rounded-2xl border border-[var(--forest)]/30 bg-[var(--forest-light)]/80 p-3.5 flex items-start gap-2.5">
               <RefreshCwIcon className="h-4 w-4 text-[var(--forest)] animate-spin shrink-0 mt-0.5" />
               <div>
                 <span className="font-semibold text-[var(--forest)]">2. Inference & Parse</span>
                 <p className="text-[11px] text-[var(--ink-muted)] mt-0.5">Strict JSON mode extraction</p>
               </div>
             </div>
-            <div className="border border-[var(--surface-border)] bg-[var(--surface-subtle)] p-3 flex items-start gap-2 opacity-75">
+            <div className="rounded-2xl border border-black/[0.06] dark:border-white/[0.08] bg-[var(--surface-subtle)]/70 p-3.5 flex items-start gap-2.5 opacity-75">
               <ClockIcon className="h-4 w-4 text-[var(--ink-subtle)] shrink-0 mt-0.5" />
               <div>
                 <span className="font-semibold text-[var(--ink-muted)]">3. Grounding Verification</span>
@@ -370,7 +438,7 @@ export function CustomTextVerifier({
       )}
 
       {extractionError && (
-        <div className="border border-[var(--coral-border)] bg-[var(--coral-bg)] p-4 text-xs shadow-xs">
+        <div className="rounded-2xl border border-red-300 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-4 text-xs shadow-xs">
           <div className="flex items-start gap-2.5 text-[var(--coral-state)]">
             <AlertTriangleIcon className="h-4 w-4 shrink-0 mt-0.5" />
             <div className="space-y-1">
@@ -382,11 +450,11 @@ export function CustomTextVerifier({
       )}
 
       {extractionResult && !isExtracting && (
-        <div className="border border-[var(--surface-border)] bg-[var(--paper-card)] p-5 shadow-xs space-y-4">
+        <div className="rounded-3xl border border-black/[0.06] dark:border-white/[0.08] bg-white dark:bg-[#181E1A] p-6 sm:p-8 shadow-xl space-y-5">
           {/* Divergence Notice when textarea changes after extraction */}
           {isDiverged && (
-            <div className="border border-[var(--amber-border)] bg-[var(--amber-bg)] p-3 text-xs flex flex-wrap items-center justify-between gap-3 text-[var(--amber-state)]">
-              <div className="flex items-start gap-2 max-w-xl">
+            <div className="rounded-2xl border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 p-4 text-xs flex flex-wrap items-center justify-between gap-3 text-[var(--amber-state)] shadow-xs">
+              <div className="flex items-start gap-2.5 max-w-xl">
                 <AlertTriangleIcon className="h-4 w-4 shrink-0 mt-0.5 text-[var(--amber-state)]" />
                 <div>
                   <span className="font-semibold font-sans">Source Text Modified:</span>{" "}
@@ -397,7 +465,7 @@ export function CustomTextVerifier({
                 type="button"
                 onClick={handleRunLiveExtraction}
                 disabled={isExtracting || sourceText.trim().length === 0}
-                className="inline-flex items-center gap-1.5 border border-[var(--amber-border)] bg-[var(--paper-card)] px-2.5 py-1 text-xs font-sans font-medium text-[var(--amber-state)] hover:bg-[var(--amber-bg)] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-[#121614] px-3 py-1.5 text-xs font-sans font-medium text-[var(--amber-state)] hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-all cursor-pointer shadow-2xs"
               >
                 <RefreshCwIcon className="h-3 w-3" />
                 <span>Rerun Extraction</span>
@@ -407,7 +475,7 @@ export function CustomTextVerifier({
 
           {/* Summary Bar */}
           {lastAddedItem && (
-            <div className="border border-[var(--emerald-border)] bg-[var(--emerald-bg)] p-3 text-xs flex flex-wrap items-center justify-between gap-2 shadow-xs transition-all">
+            <div className="rounded-2xl border border-[var(--emerald-border)] bg-[var(--emerald-bg)] p-3.5 text-xs flex flex-wrap items-center justify-between gap-2 shadow-xs transition-all">
               <div className="flex items-center gap-2 text-[var(--forest)]">
                 <CheckIcon className="h-4 w-4 shrink-0 text-[var(--emerald-state)]" />
                 <span>
@@ -418,7 +486,7 @@ export function CustomTextVerifier({
                 <button
                   type="button"
                   onClick={() => onNavigateToLedger(lastAddedItem.id)}
-                  className="inline-flex items-center gap-1 border border-[var(--forest)] bg-[var(--forest)] px-2.5 py-1 text-xs font-semibold text-white shadow-xs hover:bg-[var(--forest-hover)] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                  className="inline-flex items-center gap-1 rounded-xl bg-[var(--forest)] px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[var(--forest-hover)] transition-all cursor-pointer"
                 >
                   <span>View in Ledger</span>
                   <ArrowRightIcon className="h-3 w-3" />
@@ -427,13 +495,13 @@ export function CustomTextVerifier({
             </div>
           )}
 
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--surface-border)] pb-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-black/[0.06] dark:border-white/[0.08] pb-4">
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-serif text-base font-bold text-[var(--ink)]">
+                <h3 className="font-serif text-lg font-bold text-[var(--ink)]">
                   Extraction Results
                 </h3>
-                <span className="inline-flex items-center border border-[var(--emerald-border)] bg-[var(--emerald-bg)] px-2 py-0.5 text-[10px] font-sans font-semibold text-[var(--forest)]">
+                <span className="inline-flex items-center rounded-full border border-[var(--emerald-border)]/60 bg-[var(--emerald-bg)] px-2.5 py-0.5 text-[10px] font-sans font-semibold text-[var(--forest)] shadow-2xs">
                   {extractionResult.verifiedQuoteCount} / {extractionResult.rawCandidateCount} Quotes Verified
                 </span>
               </div>
@@ -443,7 +511,7 @@ export function CustomTextVerifier({
             </div>
 
             {extractionResult.rejectedQuoteCount > 0 && (
-              <span className="inline-flex items-center gap-1 border border-[var(--coral-border)] bg-[var(--coral-bg)] px-2 py-0.5 text-[11px] font-sans font-medium text-[var(--coral-state)]">
+              <span className="inline-flex items-center gap-1 rounded-full border border-[var(--coral-border)] bg-[var(--coral-bg)] px-3 py-1 text-[11px] font-sans font-medium text-[var(--coral-state)]">
                 <XCircleIcon className="h-3.5 w-3.5" />
                 {extractionResult.rejectedQuoteCount} quote(s) failed verification
               </span>
@@ -460,7 +528,7 @@ export function CustomTextVerifier({
               </p>
             </div>
           ) : (
-            <div className="space-y-3.5">
+            <div className="space-y-4">
               {extractionResult.candidates.map((cand, idx) => {
                 const TypeIcon = typeIcons[cand.commitmentType] || LayersIcon;
                 const isAdded = addedCandidateIds.has(cand.id);
@@ -468,19 +536,19 @@ export function CustomTextVerifier({
                 return (
                   <div
                     key={cand.id}
-                    className="border border-[var(--surface-border)] bg-[var(--surface-subtle)] p-4 transition-all hover:border-[var(--forest)]/40"
+                    className="rounded-2xl border border-black/[0.06] dark:border-white/[0.08] bg-[var(--surface-subtle)]/40 p-5 shadow-xs transition-all hover:border-[var(--forest)]/40 hover:shadow-md"
                   >
-                    <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
+                    <div className="flex flex-wrap items-start justify-between gap-2 mb-2.5">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-mono text-[10px] text-[var(--ink-subtle)]">#{idx + 1}</span>
-                        <span className={`inline-flex items-center gap-1 border px-2 py-0.5 text-[10px] font-sans font-medium uppercase tracking-wide ${getStatusBadge(cand.suggestedStatus)}`}>
+                        <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-sans font-medium uppercase tracking-wide ${getStatusBadge(cand.suggestedStatus)}`}>
                           Suggested: {cand.suggestedStatus}
                         </span>
-                        <span className="inline-flex items-center gap-1 border border-[var(--surface-border)] bg-[var(--paper-card)] px-1.5 py-0.5 text-[10px] font-sans text-[var(--ink-muted)]">
+                        <span className="inline-flex items-center gap-1 rounded-full border border-black/[0.06] dark:border-white/[0.08] bg-white dark:bg-[#121614] px-2.5 py-0.5 text-[10px] font-sans text-[var(--ink-muted)] shadow-2xs">
                           <TypeIcon className="h-3 w-3 text-[var(--forest)]" />
                           <span>{cand.commitmentType.replace("_", " ")}</span>
                         </span>
-                        <span className="inline-flex items-center border border-[var(--surface-border)] bg-[var(--paper-card)] px-1.5 py-0.5 text-[10px] font-sans text-[var(--ink-muted)]">
+                        <span className="inline-flex items-center rounded-full border border-black/[0.06] dark:border-white/[0.08] bg-white dark:bg-[#121614] px-2.5 py-0.5 text-[10px] font-sans text-[var(--ink-muted)] shadow-2xs">
                           Act: {cand.speechAct}
                         </span>
                       </div>
@@ -490,7 +558,7 @@ export function CustomTextVerifier({
                         <div className="flex flex-col items-end gap-1">
                           {isAdded ? (
                             <div className="flex items-center gap-1.5">
-                              <span className="inline-flex items-center gap-1 border border-[var(--emerald-border)] bg-[var(--emerald-bg)] px-2.5 py-1 text-xs font-sans font-medium text-[var(--forest)]">
+                              <span className="inline-flex items-center gap-1 rounded-full border border-[var(--emerald-border)] bg-[var(--emerald-bg)] px-3 py-1 text-xs font-sans font-medium text-[var(--forest)] shadow-2xs">
                                 <CheckIcon className="h-3.5 w-3.5 text-[var(--emerald-state)]" />
                                 <span>Added to Ledger</span>
                               </span>
@@ -498,7 +566,7 @@ export function CustomTextVerifier({
                                 <button
                                   type="button"
                                   onClick={() => onNavigateToLedger(cand.id)}
-                                  className="inline-flex items-center gap-1 border border-[var(--surface-border)] bg-[var(--paper-card)] px-2 py-1 text-xs font-sans font-semibold text-[var(--ink)] hover:border-[var(--forest)] hover:bg-[var(--forest-light)] transition-colors cursor-pointer"
+                                  className="inline-flex items-center gap-1 rounded-xl border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#121614] px-2.5 py-1 text-xs font-sans font-semibold text-[var(--ink)] hover:border-[var(--forest)] hover:bg-[var(--forest-light)] transition-colors cursor-pointer shadow-2xs"
                                   title="Jump to this item in Agreement Ledger"
                                 >
                                   <span>View in Ledger</span>
@@ -518,10 +586,10 @@ export function CustomTextVerifier({
                                   ? "Model suggested baseline, but ordinary correspondence cannot establish baseline. It will be added as proposed."
                                   : undefined
                               }
-                              className={`inline-flex items-center gap-1.5 border px-2.5 py-1 text-xs font-sans font-medium transition-all cursor-pointer ${
+                              className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-sans font-medium transition-all cursor-pointer shadow-2xs ${
                                 cand.quoteVerified !== true
                                   ? "border-[var(--coral-border)] bg-[var(--coral-bg)] text-[var(--coral-state)] cursor-not-allowed opacity-75"
-                                  : "border-[var(--surface-border)] bg-[var(--paper-card)] text-[var(--ink)] hover:border-[var(--forest)] hover:bg-[var(--forest-light)]"
+                                  : "border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#121614] text-[var(--ink)] hover:border-[var(--forest)] hover:bg-[var(--forest-light)] hover:-translate-y-0.5"
                               }`}
                             >
                               {cand.quoteVerified !== true ? (
@@ -553,18 +621,18 @@ export function CustomTextVerifier({
                     </div>
 
                     {/* Claim */}
-                    <div className="font-sans text-xs font-semibold text-[var(--ink)] mb-2 leading-snug">
+                    <div className="font-sans text-xs font-semibold text-[var(--ink)] mb-2.5 leading-snug">
                       {cand.claim}
                     </div>
 
                     {/* Verbatim Evidence Quote Box */}
-                    <div className="border border-[var(--surface-border)] bg-[var(--paper-card)] p-3 space-y-1.5 text-xs">
+                    <div className="rounded-2xl border border-black/[0.06] dark:border-white/[0.08] bg-white dark:bg-[#121614] p-3.5 space-y-2 text-xs shadow-sm">
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-[10px] font-sans font-semibold uppercase text-[var(--ink-subtle)]">
                           Cited Evidence Quotation
                         </span>
                         {cand.quoteVerified ? (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-sans font-medium text-[var(--emerald-state)]">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-[var(--emerald-bg)] border border-[var(--emerald-border)]/60 px-2 py-0.5 text-[10px] font-sans font-medium text-[var(--emerald-state)]">
                             <ShieldCheckIcon className="h-3 w-3" />
                             <span>Mechanically Verified</span>
                             {cand.verificationDetails.verified && (
@@ -574,7 +642,7 @@ export function CustomTextVerifier({
                             )}
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-sans font-medium text-[var(--coral-state)]">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-[var(--coral-bg)] border border-[var(--coral-border)] px-2 py-0.5 text-[10px] font-sans font-medium text-[var(--coral-state)]">
                             <XCircleIcon className="h-3 w-3" />
                             <span>
                               Verification Failed ({cand.verificationDetails.verified ? "" : cand.verificationDetails.reason})
@@ -583,11 +651,11 @@ export function CustomTextVerifier({
                         )}
                       </div>
 
-                      <blockquote className="font-serif italic text-xs text-[var(--ink)] leading-relaxed border-l-2 border-[var(--forest)]/40 pl-2.5 py-0.5">
+                      <blockquote className="font-serif italic text-xs text-[var(--ink)] leading-relaxed border-l-2 border-[var(--forest)]/50 pl-3 py-0.5">
                         &ldquo;{cand.evidenceQuote}&rdquo;
                       </blockquote>
 
-                      <div className="flex items-center justify-between text-[10px] font-mono text-[var(--ink-subtle)] pt-1 border-t border-[var(--surface-border)]">
+                      <div className="flex items-center justify-between text-[10px] font-mono text-[var(--ink-subtle)] pt-1.5 border-t border-black/[0.04] dark:border-white/[0.06]">
                         <span>Speaker: {cand.speaker}</span>
                         <span>Date/Ref: {cand.timestamp}</span>
                       </div>
@@ -603,29 +671,29 @@ export function CustomTextVerifier({
             </div>
           )}
 
-          <div className="text-[10px] text-[var(--ink-subtle)] leading-relaxed border-t border-[var(--surface-border)] pt-2">
+          <div className="text-[10px] text-[var(--ink-subtle)] leading-relaxed border-t border-black/[0.06] dark:border-white/[0.08] pt-3">
             {MECHANICAL_VERIFICATION_DISCLAIMER}
           </div>
         </div>
       )}
 
       {/* Secondary Standalone Tool: Manual Quote String Verifier */}
-      <div className="border border-[var(--surface-border)] bg-[var(--paper-card)] p-5 shadow-xs space-y-3 transition-colors">
+      <div className="rounded-3xl border border-black/[0.06] dark:border-white/[0.08] bg-white dark:bg-[#181E1A] p-6 sm:p-7 shadow-lg space-y-4 transition-colors">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-serif text-sm font-bold text-[var(--ink)]">
+            <h3 className="font-serif text-base font-bold text-[var(--ink)]">
               Direct Quote Substring Verifier
             </h3>
             <p className="text-xs text-[var(--ink-muted)]">
               Test any quotation directly against the source text above without making API requests.
             </p>
           </div>
-          <label className="flex items-center gap-1.5 text-xs text-[var(--ink-muted)] cursor-pointer">
+          <label className="flex items-center gap-2 text-xs text-[var(--ink-muted)] cursor-pointer">
             <input
               type="checkbox"
               checked={strictMode}
               onChange={(e) => setStrictMode(e.target.checked)}
-              className="rounded-none border-[var(--surface-border)] text-[var(--forest)] focus:ring-0"
+              className="rounded-md border-black/[0.15] dark:border-white/[0.2] text-[var(--forest)] focus:ring-[var(--forest)]/20"
             />
             <span>Strict Exact Mode</span>
           </label>
@@ -635,12 +703,12 @@ export function CustomTextVerifier({
           rows={3}
           value={testQuote}
           onChange={(e) => setTestQuote(e.target.value)}
-          className="w-full border border-[var(--surface-border)] bg-[var(--paper-card)] p-2.5 font-sans text-xs text-[var(--ink)] focus:border-[var(--forest)] focus:outline-hidden"
+          className="w-full rounded-2xl border border-black/[0.08] dark:border-white/[0.1] bg-[var(--paper)]/90 p-3.5 font-sans text-xs text-[var(--ink)] focus:border-[var(--forest)] focus:ring-2 focus:ring-[var(--forest)]/20 focus:outline-hidden transition-all shadow-inner"
           placeholder="Enter quote excerpt to test..."
         />
 
         {manualResult.verified ? (
-          <div className="border border-[var(--emerald-border)] bg-[var(--emerald-bg)] p-3 text-xs">
+          <div className="rounded-2xl border border-[var(--emerald-border)] bg-[var(--emerald-bg)] p-4 text-xs shadow-xs">
             <div className="flex items-center gap-2 font-semibold text-[var(--forest)]">
               <ShieldCheckIcon className="h-4 w-4 text-[var(--emerald-state)]" />
               <span>
@@ -652,7 +720,7 @@ export function CustomTextVerifier({
             </div>
           </div>
         ) : (
-          <div className="border border-[var(--coral-border)] bg-[var(--coral-bg)] p-3 text-xs">
+          <div className="rounded-2xl border border-[var(--coral-border)] bg-[var(--coral-bg)] p-4 text-xs shadow-xs">
             <div className="flex items-center gap-2 font-semibold text-[var(--coral-state)]">
               <XCircleIcon className="h-4 w-4 text-[var(--coral-state)]" />
               <span>Verification Rejected: {manualResult.reason}</span>

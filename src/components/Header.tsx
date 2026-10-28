@@ -11,6 +11,10 @@ import {
   MoonIcon,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
+  HelpCircleIcon,
+  CheckCircleIcon,
+  ChevronRightIcon,
+  ChevronDownIcon,
 } from "./icons";
 import type { AgreementItem, ProjectData } from "@/lib/sample-data";
 import type { ActiveTab } from "./Sidebar";
@@ -26,12 +30,26 @@ interface HeaderProps {
   onToggleTheme?: () => void;
   isSidebarCollapsed?: boolean;
   onToggleSidebar?: () => void;
+  onOpenGuide?: () => void;
+  onOpenProjectModal?: () => void;
+  verifiedCount?: number;
+  pendingCount?: number;
 }
+
+const TAB_CONFIG: Record<ActiveTab, { title: string; badgeText?: string; badgeColor?: "emerald" | "amber" | "neutral" }> = {
+  overview: { title: "Home / Overview", badgeText: "Summary", badgeColor: "neutral" },
+  custom: { title: "Analyze Conversation", badgeText: "Live AI", badgeColor: "emerald" },
+  ledger: { title: "Agreement Ledger", badgeColor: "neutral" },
+  review: { title: "Scope Drift Review", badgeColor: "amber" },
+  evidence: { title: "Evidence Inspector", badgeText: "Grounded", badgeColor: "emerald" },
+  draft: { title: "Clarification Reply", badgeText: "Client-Ready", badgeColor: "neutral" },
+  trace: { title: "Execution Audit", badgeText: "Deterministic", badgeColor: "neutral" },
+};
 
 export function Header({
   project,
   items,
-  activeTab,
+  activeTab = "overview",
   onNavigateToTab,
   onReset,
   onOpenMobileMenu,
@@ -39,8 +57,28 @@ export function Header({
   onToggleTheme,
   isSidebarCollapsed = false,
   onToggleSidebar,
+  onOpenGuide,
+  onOpenProjectModal,
+  verifiedCount,
+  pendingCount,
 }: HeaderProps) {
   const [copiedExport, setCopiedExport] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const [showResetToast, setShowResetToast] = useState(false);
+
+  const currentTabConfig = TAB_CONFIG[activeTab] || TAB_CONFIG.overview;
+
+  const handleResetClick = () => {
+    setIsResetting(true);
+    onReset();
+    setShowResetToast(true);
+    setTimeout(() => {
+      setIsResetting(false);
+    }, 600);
+    setTimeout(() => {
+      setShowResetToast(false);
+    }, 2800);
+  };
 
   const handleExportMarkdown = () => {
     const lines: string[] = [
@@ -74,14 +112,14 @@ export function Header({
     lines.push("| Type | Claim | Status | Evidence Quote | Speaker |");
     lines.push("|---|---|---|---|---|");
 
-    const pendingItems = items.filter(
+    const pending = items.filter(
       (i) => i.status === "proposed" || i.status === "unclear"
     );
 
-    if (pendingItems.length === 0) {
+    if (pending.length === 0) {
       lines.push("| — | None currently pending | — | — | — |");
     } else {
-      pendingItems.forEach((item) => {
+      pending.forEach((item) => {
         lines.push(
           `| **${item.commitmentType}** | ${item.claim} | \`${item.status.toUpperCase()}\` | "${item.evidenceQuote.replace(/\n/g, " ")}" | ${item.speaker} |`
         );
@@ -108,7 +146,7 @@ export function Header({
 
     const markdownText = lines.join("\n");
 
-    // Copy to clipboard or trigger download
+    // Copy to clipboard
     navigator.clipboard.writeText(markdownText).then(() => {
       setCopiedExport(true);
       setTimeout(() => setCopiedExport(false), 2500);
@@ -126,133 +164,195 @@ export function Header({
     URL.revokeObjectURL(url);
   };
 
+  // Determine contextual badge label
+  let contextualBadge = currentTabConfig.badgeText;
+  if (activeTab === "ledger") {
+    contextualBadge = `${items.length} records`;
+  } else if (activeTab === "review") {
+    const count = pendingCount !== undefined ? pendingCount : items.filter((i) => i.status === "proposed" || i.status === "unclear").length;
+    contextualBadge = count > 0 ? `${count} pending` : "0 pending";
+  } else if (activeTab === "overview" && verifiedCount !== undefined) {
+    contextualBadge = `${verifiedCount}/${items.length} verified`;
+  }
+
   return (
-    <header className="border-b border-[var(--surface-border)] bg-[var(--paper)] px-5 sm:px-6 py-3 transition-colors">
-      <div className="flex flex-col gap-3.5 sm:flex-row sm:items-center sm:justify-between">
-        {/* Left Side: Mobile Menu, Sidebar Toggle + Project Overview */}
-        <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-20 h-14 sm:h-15 border-b border-black/[0.06] dark:border-white/[0.07] bg-[var(--paper)]/92 backdrop-blur-sm px-4 sm:px-6 transition-colors flex items-center justify-between">
+      {/* Left: Sidebar Toggle + Linear-Style Breadcrumbs */}
+      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+        {/* Mobile drawer toggle */}
+        <button
+          type="button"
+          onClick={onOpenMobileMenu}
+          className="rounded-xl border border-black/[0.06] dark:border-white/[0.08] bg-white dark:bg-[#181E1A] p-2 text-[var(--ink)] shadow-2xs hover:bg-[var(--surface-subtle)] lg:hidden cursor-pointer transition-colors"
+          aria-label="Open navigation drawer"
+        >
+          <MenuIcon className="h-4 w-4" />
+        </button>
+
+        {/* Desktop sidebar collapse button */}
+        {onToggleSidebar && (
           <button
             type="button"
-            onClick={onOpenMobileMenu}
-            className="border border-[var(--surface-border)] bg-[var(--paper-card)] p-2 text-[var(--ink)] shadow-[1px_1px_0px_var(--surface-border)] lg:hidden cursor-pointer"
-            aria-label="Open navigation drawer"
+            onClick={onToggleSidebar}
+            className="hidden lg:inline-flex p-1.5 rounded-lg text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] cursor-pointer transition-colors"
+            title={isSidebarCollapsed ? "Expand sidebar (Ctrl+B)" : "Collapse sidebar (Ctrl+B)"}
+            aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            <MenuIcon className="h-4 w-4" />
-          </button>
-
-          {onToggleSidebar && (
-            <button
-              type="button"
-              onClick={onToggleSidebar}
-              className="hidden lg:inline-flex p-1.5 border border-[var(--surface-border)] bg-[var(--paper-card)] text-[var(--ink-muted)] hover:text-[var(--ink)] shadow-[1px_1px_0px_rgba(0,0,0,0.08)] cursor-pointer transition-colors"
-              title={isSidebarCollapsed ? "Expand sidebar (Ctrl+B)" : "Collapse sidebar (Ctrl+B)"}
-              aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            >
-              {isSidebarCollapsed ? (
-                <PanelLeftOpenIcon className="h-4 w-4" />
-              ) : (
-                <PanelLeftCloseIcon className="h-4 w-4" />
-              )}
-            </button>
-          )}
-
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="font-serif text-lg sm:text-xl font-bold tracking-tight text-[var(--ink)]">
-                {project.title}
-              </h1>
-              <span className="border border-[var(--emerald-border)] bg-[var(--emerald-bg)] px-2 py-0.5 text-[11px] font-sans font-medium text-[var(--emerald-state)]">
-                Evidence-Backed Project
-              </span>
-            </div>
-            <div className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-[var(--ink-muted)]">
-              <span>
-                <strong className="text-[var(--ink)]">Client:</strong> {project.clientName} ({project.clientCompany})
-              </span>
-              <span className="text-[var(--ink-subtle)]">•</span>
-              <span>
-                <strong className="text-[var(--ink)]">Contractor:</strong> {project.contractorName}
-              </span>
-              <span className="text-[var(--ink-subtle)]">•</span>
-              <span>
-                <strong className="text-[var(--ink)]">Started:</strong> {project.startDate}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Side: Theme Toggle & Actions */}
-        <div className="flex flex-wrap items-center gap-2">
-          {onNavigateToTab && (
-            <button
-              type="button"
-              onClick={() => onNavigateToTab("custom")}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold shadow-[1.5px_1.5px_0px_var(--ink)] transition-all duration-150 active:translate-x-0.5 active:translate-y-0.5 cursor-pointer ${
-                activeTab === "custom"
-                  ? "border border-[var(--forest)] bg-[var(--forest)] text-white"
-                  : "border border-[var(--ink)] bg-[var(--forest)] text-white hover:bg-[var(--forest-hover)] hover:shadow-[2px_2px_0px_var(--ink)]"
-              }`}
-              title="Analyze new client communication with Nebius"
-            >
-              <SparklesIcon className="h-3.5 w-3.5 text-amber-300" />
-              <span className="hidden xs:inline">Analyze Conversation</span>
-              <span className="xs:hidden">Analyze</span>
-            </button>
-          )}
-
-          <button
-            type="button"
-            onClick={handleExportMarkdown}
-            className="brutal-btn-outline inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-[var(--ink)] cursor-pointer"
-            title="Download verified agreement ledger in Markdown"
-          >
-            {copiedExport ? (
-              <>
-                <CheckIcon className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span>Copied & Saved!</span>
-              </>
+            {isSidebarCollapsed ? (
+              <PanelLeftOpenIcon className="h-4 w-4" />
             ) : (
-              <>
-                <FileTextIcon className="h-3.5 w-3.5 text-[var(--ink-muted)]" />
-                <span className="hidden sm:inline">Export Markdown</span>
-                <span className="sm:hidden">Export</span>
-              </>
+              <PanelLeftCloseIcon className="h-4 w-4" />
             )}
           </button>
+        )}
 
-          {onToggleTheme && (
-            <button
-              type="button"
-              onClick={onToggleTheme}
-              className="brutal-btn-outline inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-[var(--ink)] cursor-pointer"
-              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-            >
-              {theme === "dark" ? (
-                <>
-                  <SunIcon className="h-3.5 w-3.5 text-amber-400" />
-                  <span className="hidden sm:inline">Light</span>
-                </>
-              ) : (
-                <>
-                  <MoonIcon className="h-3.5 w-3.5 text-[var(--ink-muted)]" />
-                  <span className="hidden sm:inline">Dark</span>
-                </>
-              )}
-            </button>
-          )}
+        {/* Subtle Divider */}
+        <div className="hidden lg:block h-4 w-[1px] bg-black/[0.08] dark:bg-white/[0.1]" />
 
+        {/* Interactive Workspace Pill */}
+        {onOpenProjectModal ? (
           <button
             type="button"
-            onClick={onReset}
-            className="brutal-btn-outline inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-[var(--ink-muted)] hover:text-[var(--ink)] cursor-pointer"
-            title="Reset to initial sample state"
+            onClick={onOpenProjectModal}
+            className="group flex items-center gap-2 rounded-xl border border-black/[0.06] dark:border-white/[0.08] bg-white/70 dark:bg-[#181E1A]/70 hover:border-[var(--forest)]/40 hover:bg-white dark:hover:bg-[#181E1A] px-2.5 py-1 text-xs text-[var(--ink)] shadow-2xs transition-colors cursor-pointer"
+            title="Switch or create client workspace"
           >
-            <RefreshCwIcon className="h-3.5 w-3.5 text-[var(--ink-subtle)]" />
-            <span className="hidden md:inline">Reset</span>
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+            </span>
+            <span className="font-semibold truncate max-w-[140px] sm:max-w-[200px]">
+              {project.clientCompany || "Aura Health Inc."}
+            </span>
+            <ChevronDownIcon className="h-3 w-3 text-[var(--ink-subtle)] group-hover:text-[var(--ink)] transition-colors" />
           </button>
+        ) : (
+          <div className="flex items-center gap-2 rounded-xl border border-black/[0.06] dark:border-white/[0.08] bg-white/70 dark:bg-[#181E1A]/70 px-2.5 py-1 text-xs text-[var(--ink)] shadow-2xs">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="font-semibold truncate max-w-[140px] sm:max-w-[200px]">
+              {project.clientCompany || "Aura Health Inc."}
+            </span>
+          </div>
+        )}
+
+        {/* Breadcrumb Separator */}
+        <ChevronRightIcon className="h-3.5 w-3.5 text-[var(--ink-subtle)] shrink-0" />
+
+        {/* Active Page / Tab Title */}
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="font-sans text-xs sm:text-sm font-semibold text-[var(--ink)] tracking-tight truncate">
+            {currentTabConfig.title}
+          </span>
+
+          {contextualBadge && (
+            <span
+              className={`hidden sm:inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-mono font-medium ${
+                currentTabConfig.badgeColor === "emerald"
+                  ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25"
+                  : currentTabConfig.badgeColor === "amber"
+                  ? "bg-[var(--amber-bg)] text-[var(--amber-state)] border border-[var(--amber-border)]"
+                  : "bg-[var(--surface-subtle)] text-[var(--ink-muted)] border border-black/[0.06] dark:border-white/[0.08]"
+              }`}
+            >
+              {contextualBadge}
+            </span>
+          )}
         </div>
       </div>
+
+      {/* Right: Purpose-Driven Utility & Action Suite */}
+      <div className="flex items-center gap-2 shrink-0">
+        {/* Quick Action: Analyze Conversation (If not currently on custom tab) */}
+        {onNavigateToTab && activeTab !== "custom" && (
+          <button
+            type="button"
+            onClick={() => onNavigateToTab("custom")}
+            className="hidden md:inline-flex items-center gap-1.5 rounded-xl border border-[var(--forest)]/30 bg-[var(--forest-light)]/60 dark:bg-[var(--forest)]/20 hover:bg-[var(--forest)] hover:text-white px-3 py-1.5 text-xs font-semibold text-[var(--forest)] dark:text-emerald-300 shadow-2xs transition-all cursor-pointer group"
+            title="Analyze new correspondence"
+          >
+            <SparklesIcon className="h-3.5 w-3.5 text-[var(--forest)] dark:text-emerald-300 group-hover:text-white transition-colors" />
+            <span>Analyze</span>
+          </button>
+        )}
+
+        {/* Export Ledger Button */}
+        <button
+          type="button"
+          onClick={handleExportMarkdown}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#181E1A] hover:bg-[var(--surface-subtle)] px-2.5 sm:px-3 py-1.5 text-xs font-medium text-[var(--ink)] shadow-2xs transition-colors cursor-pointer"
+          title="Download verified agreement ledger in Markdown"
+        >
+          {copiedExport ? (
+            <>
+              <CheckIcon className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Saved</span>
+            </>
+          ) : (
+            <>
+              <FileTextIcon className="h-3.5 w-3.5 text-[var(--ink-muted)]" />
+              <span className="hidden sm:inline">Export</span>
+            </>
+          )}
+        </button>
+
+        {/* Quick Tour Button */}
+        {onOpenGuide && (
+          <button
+            type="button"
+            onClick={onOpenGuide}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#181E1A] hover:bg-[var(--surface-subtle)] px-2.5 sm:px-3 py-1.5 text-xs font-medium text-[var(--ink-muted)] hover:text-[var(--forest)] shadow-2xs transition-colors cursor-pointer"
+            title="How Receipts Works — Quick Start Tour"
+          >
+            <HelpCircleIcon className="h-3.5 w-3.5 text-[var(--forest)]" />
+            <span className="hidden sm:inline">Tour</span>
+          </button>
+        )}
+
+        {/* Divider */}
+        <div className="h-4 w-[1px] bg-black/[0.08] dark:bg-white/[0.1] mx-0.5" />
+
+        {/* Dark / Light Mode Toggle */}
+        {onToggleTheme && (
+          <button
+            type="button"
+            onClick={onToggleTheme}
+            className="p-1.5 rounded-xl border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#181E1A] text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-subtle)] shadow-2xs transition-colors cursor-pointer"
+            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {theme === "dark" ? (
+              <SunIcon className="h-3.5 w-3.5 text-amber-400" />
+            ) : (
+              <MoonIcon className="h-3.5 w-3.5 text-[var(--ink-muted)]" />
+            )}
+          </button>
+        )}
+
+        {/* Reset Workspace Baseline */}
+        <button
+          type="button"
+          onClick={handleResetClick}
+          disabled={isResetting}
+          className={`p-1.5 rounded-xl border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#181E1A] shadow-2xs transition-colors cursor-pointer ${
+            isResetting
+              ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
+              : "text-[var(--ink-subtle)] hover:text-red-500 hover:border-red-500/30 hover:bg-red-500/5"
+          }`}
+          title="Reset workspace to verified baseline"
+          aria-label="Reset workspace baseline"
+        >
+          <RefreshCwIcon className={`h-3.5 w-3.5 ${isResetting ? "animate-spin text-emerald-600 dark:text-emerald-400" : ""}`} />
+        </button>
+      </div>
+
+      {/* Floating feedback toast when workspace is reset */}
+      {showResetToast && (
+        <div className="absolute top-16 right-4 z-50 flex items-center gap-2.5 rounded-2xl border border-emerald-500/30 bg-white/95 dark:bg-[#181E1A]/95 px-4 py-2.5 text-xs font-medium text-[var(--ink)] shadow-xl shadow-black/10 backdrop-blur-md animate-fade-in">
+          <CheckCircleIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+          <span>Workspace reset: 8 verified baseline items restored.</span>
+        </div>
+      )}
     </header>
   );
 }
+

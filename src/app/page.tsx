@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Sidebar, type ActiveTab } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
 import { BentoOverview } from "@/components/BentoOverview";
@@ -10,7 +10,12 @@ import { EvidenceInspector } from "@/components/EvidenceInspector";
 import { ReplyDraftPanel } from "@/components/ReplyDraftPanel";
 import { ExecutionTracePanel } from "@/components/ExecutionTracePanel";
 import { CustomTextVerifier } from "@/components/CustomTextVerifier";
-import { SAMPLE_PROJECT, type AgreementItem } from "@/lib/sample-data";
+import { InteractiveTourModal } from "@/components/InteractiveTourModal";
+import { AuroraBackground } from "@/components/AuroraBackground";
+import { ProjectModal } from "@/components/ProjectModal";
+import { AddAgreementItemModal } from "@/components/AddAgreementItemModal";
+import { SAMPLE_PROJECT, type AgreementItem, type ProjectData } from "@/lib/sample-data";
+import { loadAllProjects, getActiveProjectId, setActiveProjectId } from "@/lib/project-storage";
 import { verifyEvidence } from "@/lib/verifier";
 import {
   confirmItemInLedger,
@@ -25,7 +30,7 @@ import {
 } from "@/lib/ledger-actions";
 
 export default function Home() {
-  const [project] = useState(SAMPLE_PROJECT);
+  const [project, setProject] = useState<ProjectData>(SAMPLE_PROJECT);
   const [items, setItems] = useState<AgreementItem[]>(SAMPLE_PROJECT.initialItems);
   const [activeTab, setActiveTab] = useState<ActiveTab>("overview");
   const [selectedItemId, setSelectedItemId] = useState<string | null>(
@@ -35,6 +40,22 @@ export default function Home() {
   const [isStorageInitialized, setIsStorageInitialized] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState<boolean | undefined>(undefined);
+  const [isTourOpen, setIsTourOpen] = useState(false);
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
+
+  const mainScrollRef = useRef<HTMLElement>(null);
+
+  // Buttery-smooth tab transition: scroll main workspace immediately to top on tab change
+  useEffect(() => {
+    mainScrollRef.current?.scrollTo({ top: 0, behavior: "instant" });
+  }, [activeTab]);
+
+  const handleOpenGuide = () => {
+    setIsTourOpen(true);
+    setIsGuideOpen(true);
+  };
 
   // Restore theme, sidebar, and persisted ledger state on initial client mount
   useEffect(() => {
@@ -49,15 +70,29 @@ export default function Home() {
       if (isDark) {
         document.documentElement.classList.add("dark");
         document.documentElement.setAttribute("data-theme", "dark");
+        document.body?.classList.add("dark");
+        document.body?.setAttribute("data-theme", "dark");
       } else {
         document.documentElement.classList.remove("dark");
         document.documentElement.setAttribute("data-theme", "light");
+        document.body?.classList.remove("dark");
+        document.body?.setAttribute("data-theme", "light");
       }
 
       const savedSidebar = localStorage.getItem("receipts-sidebar-collapsed");
       if (savedSidebar === "true") {
         queueMicrotask(() => {
           setIsSidebarCollapsed(true);
+        });
+      }
+
+      // Restore active project workspace if previously chosen
+      const allProjects = loadAllProjects();
+      const activeId = getActiveProjectId();
+      const activeProj = allProjects.find((p) => p.id === activeId);
+      if (activeProj) {
+        queueMicrotask(() => {
+          setProject(activeProj);
         });
       }
     } catch {
@@ -125,9 +160,13 @@ export default function Home() {
       if (next === "dark") {
         document.documentElement.classList.add("dark");
         document.documentElement.setAttribute("data-theme", "dark");
+        document.body?.classList.add("dark");
+        document.body?.setAttribute("data-theme", "dark");
       } else {
         document.documentElement.classList.remove("dark");
         document.documentElement.setAttribute("data-theme", "light");
+        document.body?.classList.remove("dark");
+        document.body?.setAttribute("data-theme", "light");
       }
       return next;
     });
@@ -145,18 +184,24 @@ export default function Home() {
     });
   };
 
-  const selectedItem = items.find((i) => i.id === selectedItemId) || items[0] || null;
+  const selectedItem = useMemo(() => {
+    return items.find((i) => i.id === selectedItemId) || items[0] || null;
+  }, [items, selectedItemId]);
 
   // Calculate verified items count against each item's authoritative source text
-  const verifiedCount = items.filter((item) => {
-    const sourceText = resolveItemSourceText(item, project.threads);
-    if (!sourceText) return false;
-    return verifyEvidence(sourceText, item.evidenceQuote).verified;
-  }).length;
+  const verifiedCount = useMemo(() => {
+    return items.filter((item) => {
+      const sourceText = resolveItemSourceText(item, project.threads);
+      if (!sourceText) return false;
+      return verifyEvidence(sourceText, item.evidenceQuote).verified;
+    }).length;
+  }, [items, project.threads]);
 
-  const pendingCount = items.filter(
-    (i) => i.status === "proposed" || i.status === "unclear"
-  ).length;
+  const pendingCount = useMemo(() => {
+    return items.filter(
+      (i) => i.status === "proposed" || i.status === "unclear"
+    ).length;
+  }, [items]);
 
   // Handlers for human-controlled agreement transitions using pure domain functions
   const handleConfirmItem = (id: string) => {
@@ -188,8 +233,31 @@ export default function Home() {
 
   const handleReset = () => {
     clearLedgerStorage();
-    setItems(SAMPLE_PROJECT.initialItems);
-    setSelectedItemId(SAMPLE_PROJECT.initialItems[0]?.id || null);
+    if (project.id === SAMPLE_PROJECT.id) {
+      setItems(SAMPLE_PROJECT.initialItems);
+      setSelectedItemId(SAMPLE_PROJECT.initialItems[0]?.id || null);
+    } else {
+      setItems(project.initialItems || []);
+      setSelectedItemId(project.initialItems[0]?.id || null);
+    }
+  };
+
+  const handleSelectProject = (newProject: ProjectData) => {
+    setProject(newProject);
+    setActiveProjectId(newProject.id);
+    if (newProject.id === SAMPLE_PROJECT.id) {
+      const stored = loadLedgerFromStorage();
+      setItems(stored ? stored.items : SAMPLE_PROJECT.initialItems);
+      setSelectedItemId(SAMPLE_PROJECT.initialItems[0]?.id || null);
+    } else {
+      setItems(newProject.initialItems || []);
+      setSelectedItemId(newProject.initialItems[0]?.id || null);
+    }
+  };
+
+  const handleManualAddItem = (newItem: AgreementItem) => {
+    setItems((prev) => [newItem, ...prev]);
+    setSelectedItemId(newItem.id);
   };
 
   const handleSelectItem = (item: AgreementItem) => {
@@ -214,7 +282,10 @@ export default function Home() {
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[var(--paper)] text-[var(--ink)] font-sans antialiased transition-colors">
+    <div className="relative flex h-screen w-screen overflow-hidden bg-transparent text-[var(--ink)] font-sans antialiased transition-colors">
+      {/* 3D Emerald Borealis Ambient Background Mesh */}
+      <AuroraBackground />
+
       {/* Persistent Left Sidebar (Fixed / Desktop with collapse, Modal / Mobile) */}
       <Sidebar
         activeTab={activeTab}
@@ -225,6 +296,9 @@ export default function Home() {
         setIsMobileOpen={setIsMobileOpen}
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={handleToggleSidebar}
+        onOpenGuide={handleOpenGuide}
+        project={project}
+        onOpenProjectModal={() => setIsProjectModalOpen(true)}
       />
 
       {/* Main Workspace Area */}
@@ -241,10 +315,14 @@ export default function Home() {
           onToggleTheme={handleToggleTheme}
           isSidebarCollapsed={isSidebarCollapsed}
           onToggleSidebar={handleToggleSidebar}
+          onOpenGuide={handleOpenGuide}
+          onOpenProjectModal={() => setIsProjectModalOpen(true)}
+          verifiedCount={verifiedCount}
+          pendingCount={pendingCount}
         />
 
         {/* Scrollable Main Content (Independently scrollable) */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6 space-y-5">
+        <main ref={mainScrollRef} className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6 space-y-5">
           {/* 1. Home / Overview Dashboard View */}
           {activeTab === "overview" && (
             <div className="animate-fade-in">
@@ -256,6 +334,9 @@ export default function Home() {
                   setSelectedItemId(item.id);
                   setActiveTab("evidence");
                 }}
+                isGuideOpen={isGuideOpen}
+                onCloseGuide={() => setIsGuideOpen(false)}
+                onOpenTour={handleOpenGuide}
               />
             </div>
           )}
@@ -272,6 +353,7 @@ export default function Home() {
                   onDismissItem={handleDismissItem}
                   onRestoreItem={handleRestoreItem}
                   onOpenExtractor={() => setActiveTab("custom")}
+                  onOpenAddItem={() => setIsAddItemModalOpen(true)}
                 />
               </div>
               {selectedItem && (
@@ -353,6 +435,29 @@ export default function Home() {
           )}
         </main>
       </div>
+
+      {/* Interactive Step-by-Step Product Walkthrough Tour */}
+      <InteractiveTourModal
+        isOpen={isTourOpen}
+        onClose={() => setIsTourOpen(false)}
+        onNavigateToTab={(tab) => setActiveTab(tab)}
+      />
+
+      {/* Project & Workspace Switcher Modal */}
+      <ProjectModal
+        isOpen={isProjectModalOpen}
+        onClose={() => setIsProjectModalOpen(false)}
+        activeProject={project}
+        onSelectProject={handleSelectProject}
+      />
+
+      {/* Manual Agreement Item Entry Modal */}
+      <AddAgreementItemModal
+        isOpen={isAddItemModalOpen}
+        onClose={() => setIsAddItemModalOpen(false)}
+        onAddItem={handleManualAddItem}
+        project={project}
+      />
     </div>
   );
 }

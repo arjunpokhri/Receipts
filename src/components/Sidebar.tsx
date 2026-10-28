@@ -12,8 +12,9 @@ import {
   XIcon,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
-  BriefcaseIcon,
+  HelpCircleIcon,
 } from "./icons";
+import type { ProjectData } from "@/lib/sample-data";
 
 export type ActiveTab =
   | "overview"
@@ -33,6 +34,9 @@ interface SidebarProps {
   setIsMobileOpen: (open: boolean) => void;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
+  onOpenGuide?: () => void;
+  project?: ProjectData;
+  onOpenProjectModal?: () => void;
 }
 
 export function Sidebar({
@@ -44,12 +48,15 @@ export function Sidebar({
   setIsMobileOpen,
   isCollapsed = false,
   onToggleCollapse,
+  onOpenGuide,
+  project,
+  onOpenProjectModal,
 }: SidebarProps) {
-  const navItems = [
+  const coreWorkflowItems = [
     {
       id: "overview" as ActiveTab,
       label: "Home / Overview",
-      description: "Workspace summary & workflow",
+      description: "Workspace summary & live scope bridge",
       icon: HomeIcon,
     },
     {
@@ -69,12 +76,15 @@ export function Sidebar({
     },
     {
       id: "review" as ActiveTab,
-      label: "Scope & Request Review",
+      label: "Scope Drift Review",
       description: "Delta analysis & change proposals",
       icon: LayersIcon,
       badge: pendingCount > 0 ? `${pendingCount} pending` : undefined,
       badgeColor: "amber",
     },
+  ];
+
+  const toolsAndProofItems = [
     {
       id: "evidence" as ActiveTab,
       label: "Evidence Inspector",
@@ -83,182 +93,37 @@ export function Sidebar({
     },
     {
       id: "draft" as ActiveTab,
-      label: "Clarification Reply Draft",
+      label: "Clarification Reply",
       description: "Client-facing alignment copy",
       icon: MessageSquareIcon,
     },
     {
       id: "trace" as ActiveTab,
-      label: "Execution Audit Trace",
+      label: "Execution Audit",
       description: "Deterministic checks & schema audit",
       icon: FileTextIcon,
     },
   ];
 
-  const renderContent = (isMobileDrawer = false) => {
-    const collapsed = !isMobileDrawer && isCollapsed;
-
+  const renderNavSection = (
+    title: string,
+    items: typeof coreWorkflowItems,
+    collapsed: boolean,
+    isMobileDrawer: boolean
+  ) => {
     return (
-      <div className="flex h-full flex-col">
-        {/* Brand Header */}
-        <div
-          className={`flex h-16 shrink-0 items-center border-b border-[var(--surface-border)] bg-[var(--paper)] ${
-            collapsed ? "justify-center px-2" : "justify-between px-5"
-          }`}
-        >
-          {collapsed ? (
-            <div className="flex flex-col items-center gap-1">
-              <button
-                type="button"
-                onClick={() => setActiveTab("overview")}
-                className="flex h-9 w-9 items-center justify-center border border-[var(--ink)] bg-[var(--forest)] text-white shadow-[1px_1px_0px_var(--ink)] cursor-pointer transition-transform hover:scale-105"
-                title="Receipts — Home / Overview"
-                aria-label="Home Overview"
-              >
-                <ReceiptIcon className="h-4.5 w-4.5 text-white" />
-              </button>
-              {onToggleCollapse && (
-                <button
-                  type="button"
-                  onClick={onToggleCollapse}
-                  className="mt-1 text-[var(--ink-muted)] hover:text-[var(--ink)] cursor-pointer p-0.5"
-                  title="Expand sidebar (Ctrl+B)"
-                  aria-label="Expand sidebar"
-                >
-                  <PanelLeftOpenIcon className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab("overview");
-                  if (isMobileDrawer) setIsMobileOpen(false);
-                }}
-                className="flex items-center gap-3 text-left cursor-pointer group"
-              >
-                <div className="flex h-9 w-9 items-center justify-center border border-[var(--ink)] bg-[var(--forest)] text-white shadow-[1px_1px_0px_var(--ink)] transition-transform group-hover:scale-105">
-                  <ReceiptIcon className="h-4.5 w-4.5 text-white" />
-                </div>
-                <div>
-                  <span className="font-serif text-xl font-bold tracking-tight text-[var(--ink)] block leading-none">
-                    Receipts
-                  </span>
-                  <span className="block text-[11px] font-sans text-[var(--ink-muted)] mt-0.5">
-                    Agreement & Scope Tracker
-                  </span>
-                </div>
-              </button>
+      <div className="space-y-1">
+        {!collapsed && (
+          <div className="px-3 pt-3 pb-1 text-[10px] font-sans font-semibold uppercase tracking-wider text-[var(--ink-subtle)]">
+            {title}
+          </div>
+        )}
 
-              <div className="flex items-center gap-1">
-                {!isMobileDrawer && onToggleCollapse && (
-                  <button
-                    type="button"
-                    onClick={onToggleCollapse}
-                    className="p-1.5 text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-subtle)] border border-transparent hover:border-[var(--surface-border)] cursor-pointer transition-colors"
-                    title="Collapse sidebar (Ctrl+B)"
-                    aria-label="Collapse sidebar"
-                  >
-                    <PanelLeftCloseIcon className="h-4 w-4" />
-                  </button>
-                )}
+        {items.map((item) => {
+          const Icon = item.icon;
+          const isActive = activeTab === item.id;
 
-                {isMobileDrawer && (
-                  <button
-                    type="button"
-                    className="p-1.5 text-[var(--ink-muted)] hover:text-[var(--ink)] cursor-pointer"
-                    onClick={() => setIsMobileOpen(false)}
-                    aria-label="Close sidebar"
-                  >
-                    <XIcon className="h-5 w-5" />
-                  </button>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Active Project Indicator */}
-        <div
-          className={`border-b border-[var(--surface-border)] bg-[var(--surface-subtle)] shrink-0 transition-colors ${
-            collapsed ? "p-2.5 flex justify-center" : "px-5 py-3"
-          }`}
-        >
-          {collapsed ? (
-            <div
-              className="flex h-8 w-8 items-center justify-center border border-[var(--surface-border)] bg-[var(--paper-card)] text-[var(--ink-muted)]"
-              title="Active Workspace: Aura Health Inc. (Sample Data)"
-            >
-              <BriefcaseIcon className="h-4 w-4 text-[var(--forest)]" />
-            </div>
-          ) : (
-            <>
-              <div className="text-[10px] font-sans font-semibold tracking-wider text-[var(--ink-muted)] uppercase">
-                Active Workspace
-              </div>
-              <div className="mt-0.5 flex items-center justify-between">
-                <span className="truncate text-xs font-semibold text-[var(--ink)]">
-                  Aura Health Inc.
-                </span>
-                <span className="inline-flex items-center border border-[var(--surface-border)] bg-[var(--paper-card)] px-1.5 py-0.5 text-[10px] font-sans font-medium text-[var(--ink-muted)]">
-                  Sample Data
-                </span>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Navigation Items */}
-        <nav
-          className={`flex-1 overflow-y-auto ${
-            collapsed ? "px-2 py-3 space-y-2" : "space-y-1 px-3.5 py-4"
-          }`}
-        >
-          {!collapsed && (
-            <div className="px-2 pb-1.5 text-[10px] font-sans font-semibold uppercase tracking-wider text-[var(--ink-subtle)]">
-              Navigation
-            </div>
-          )}
-
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-
-            if (collapsed) {
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => {
-                    setActiveTab(item.id);
-                    if (isMobileDrawer) setIsMobileOpen(false);
-                  }}
-                  className={`relative flex h-10 w-10 mx-auto items-center justify-center border transition-all duration-150 cursor-pointer ${
-                    isActive
-                      ? "border-[var(--forest)] bg-[var(--forest)] text-white shadow-[1.5px_1.5px_0px_var(--ink)]"
-                      : "border-transparent text-[var(--ink-muted)] hover:border-[var(--surface-border)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"
-                  }`}
-                  title={`${item.label} — ${item.description}`}
-                  aria-label={item.label}
-                >
-                  <Icon className="h-4.5 w-4.5" />
-                  {item.badge && (
-                    <span
-                      className={`absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full border border-[var(--paper)] ${
-                        item.badgeColor === "amber"
-                          ? "bg-amber-500"
-                          : item.badgeColor === "emerald"
-                          ? "bg-emerald-500"
-                          : "bg-[var(--forest)]"
-                      }`}
-                    />
-                  )}
-                </button>
-              );
-            }
-
+          if (collapsed) {
             return (
               <button
                 key={item.id}
@@ -267,85 +132,265 @@ export function Sidebar({
                   setActiveTab(item.id);
                   if (isMobileDrawer) setIsMobileOpen(false);
                 }}
-                className={`group relative flex w-full items-start gap-3 border px-3 py-2 text-left transition-all duration-150 cursor-pointer ${
+                className={`group relative flex h-10 w-10 mx-auto items-center justify-center rounded-xl transition-colors duration-100 ease-out cursor-pointer ${
                   isActive
-                    ? "border-[var(--forest)] bg-[var(--paper-card)] text-[var(--ink)] shadow-[1px_1px_0px_var(--forest)]"
-                    : "border-transparent text-[var(--ink-muted)] hover:border-[var(--surface-border)] hover:bg-[var(--surface-subtle)] hover:text-[var(--ink)]"
+                    ? "bg-[var(--forest-light)] dark:bg-[var(--forest)] text-[var(--forest)] dark:text-white border border-[var(--forest)]/25 dark:border-transparent shadow-2xs dark:shadow-md dark:shadow-[var(--forest)]/25"
+                    : "text-[var(--ink-muted)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-[var(--ink)]"
                 }`}
+                title={`${item.label} — ${item.description}`}
+                aria-label={item.label}
               >
-                {isActive && (
-                  <span className="absolute left-0 inset-y-1 w-0.5 bg-[var(--forest)]" />
+                <Icon className={`h-4.5 w-4.5 transition-transform duration-100 ${isActive ? "scale-105" : "group-hover:scale-105"}`} />
+                {item.badge && (
+                  <span
+                    className={`absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full border-2 border-[var(--paper)] ${
+                      item.badgeColor === "amber"
+                        ? "bg-amber-500"
+                        : item.badgeColor === "emerald"
+                        ? "bg-emerald-500"
+                        : "bg-[var(--forest)]"
+                    }`}
+                  />
                 )}
-                <div
-                  className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center transition-colors duration-150 ${
-                    isActive ? "text-[var(--forest)]" : "text-[var(--ink-muted)] group-hover:text-[var(--ink)]"
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-1">
-                    <span
-                      className={`truncate text-xs ${
-                        isActive ? "font-semibold text-[var(--ink)]" : "font-medium text-[var(--ink)]/90"
-                      }`}
-                    >
-                      {item.label}
-                    </span>
-                    {item.badge && (
-                      <span
-                        className={`px-1.5 py-0.2 text-[10px] font-sans font-medium ${
-                          item.badgeColor === "amber"
-                            ? "border border-[var(--amber-border)] bg-[var(--amber-bg)] text-[var(--amber-state)]"
-                            : item.badgeColor === "emerald"
-                            ? "border border-[var(--emerald-border)] bg-[var(--emerald-bg)] text-[var(--emerald-state)]"
-                            : "border border-[var(--surface-border)] bg-[var(--surface-subtle)] text-[var(--ink)]"
-                        }`}
-                      >
-                        {item.badge}
-                      </span>
-                    )}
-                  </div>
-                  <p className="truncate text-[10px] text-[var(--ink-subtle)]">
-                    {item.description}
-                  </p>
-                </div>
               </button>
             );
-          })}
-        </nav>
+          }
 
-        {/* Footer / System Status */}
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => {
+                setActiveTab(item.id);
+                if (isMobileDrawer) setIsMobileOpen(false);
+              }}
+              title={item.description}
+              className={`group relative flex w-full items-center justify-between gap-2.5 rounded-xl px-3 py-2 text-left transition-colors duration-100 ease-out cursor-pointer ${
+                isActive
+                  ? "bg-[var(--forest-light)] dark:bg-[var(--forest)] text-[var(--forest)] dark:text-white font-semibold border border-[var(--forest)]/25 dark:border-transparent shadow-2xs dark:shadow-md dark:shadow-[var(--forest)]/20"
+                  : "text-[var(--ink-muted)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] hover:text-[var(--ink)]"
+              }`}
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Icon
+                  className={`h-4 w-4 shrink-0 transition-colors duration-100 ${
+                    isActive ? "text-[var(--forest)] dark:text-emerald-200" : "text-[var(--ink-subtle)] group-hover:text-[var(--ink)]"
+                  }`}
+                />
+                <span className="truncate text-xs tracking-tight">
+                  {item.label}
+                </span>
+              </div>
+
+              {item.badge && (
+                <span
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-sans font-medium transition-colors ${
+                    isActive
+                      ? "bg-[var(--forest)]/10 text-[var(--forest)] font-semibold dark:bg-white/20 dark:text-white"
+                      : item.badgeColor === "amber"
+                      ? "border border-[var(--amber-border)] bg-[var(--amber-bg)] text-[var(--amber-state)]"
+                      : item.badgeColor === "emerald"
+                      ? "border border-[var(--emerald-border)] bg-[var(--emerald-bg)] text-[var(--emerald-state)]"
+                      : "border border-black/[0.06] dark:border-white/[0.08] bg-[var(--surface-subtle)] text-[var(--ink)]"
+                  }`}
+                >
+                  {item.badge}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderContent = (isMobileDrawer = false) => {
+    const collapsed = !isMobileDrawer && isCollapsed;
+
+    return (
+      <div className="flex h-full flex-col">
+        {/* Unified Brand & Workspace Header */}
         <div
-          className={`border-t border-[var(--surface-border)] shrink-0 bg-[var(--paper)] transition-colors ${
-            collapsed ? "p-2.5 flex justify-center" : "p-3.5"
+          className={`shrink-0 border-b border-black/[0.05] dark:border-white/[0.06] ${
+            collapsed ? "py-4 px-2 flex flex-col items-center gap-3" : "p-4"
           }`}
         >
           {collapsed ? (
-            <div
-              className="flex h-8 w-8 items-center justify-center border border-[var(--surface-border)] bg-[var(--paper-card)]"
-              title="Nebius & Deterministic Substring Verifier Ready"
-            >
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--emerald-state)] opacity-75"></span>
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[var(--emerald-state)]"></span>
-              </span>
+            <div className="flex flex-col items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveTab("overview")}
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--forest)] to-[#153224] text-white shadow-md shadow-[var(--forest)]/20 cursor-pointer transition-transform hover:scale-105"
+                title="Receipts — Home / Overview"
+                aria-label="Home Overview"
+              >
+                <ReceiptIcon className="h-5 w-5 text-white" />
+              </button>
+              {onToggleCollapse && (
+                <button
+                  type="button"
+                  onClick={onToggleCollapse}
+                  className="text-[var(--ink-subtle)] hover:text-[var(--ink)] cursor-pointer p-1.5 rounded-lg hover:bg-black/[0.04] dark:hover:bg-white/[0.05] transition-colors"
+                  title="Expand sidebar (Ctrl+B)"
+                  aria-label="Expand sidebar"
+                >
+                  <PanelLeftOpenIcon className="h-4 w-4" />
+                </button>
+              )}
             </div>
           ) : (
-            <div className="border border-[var(--surface-border)] bg-[var(--paper-card)] p-2.5 text-xs">
-              <div className="flex items-center gap-2">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--emerald-state)] opacity-75"></span>
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--emerald-state)]"></span>
-                </span>
-                <span className="text-[11px] font-semibold text-[var(--ink)]">
-                  Nebius & Verifier Ready
+            <div className="space-y-3">
+              {/* Brand Row */}
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab("overview");
+                    if (isMobileDrawer) setIsMobileOpen(false);
+                  }}
+                  className="flex items-center gap-2.5 text-left cursor-pointer group"
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--forest)] to-[#153224] text-white shadow-md shadow-[var(--forest)]/20 transition-transform group-hover:scale-105">
+                    <ReceiptIcon className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <span className="font-serif text-lg font-bold tracking-tight text-[var(--ink)] block leading-tight">
+                      Receipts
+                    </span>
+                  </div>
+                </button>
+
+                <div className="flex items-center gap-1">
+                  {!isMobileDrawer && onToggleCollapse && (
+                    <button
+                      type="button"
+                      onClick={onToggleCollapse}
+                      className="p-1.5 text-[var(--ink-subtle)] hover:text-[var(--ink)] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] rounded-lg cursor-pointer transition-colors"
+                      title="Collapse sidebar (Ctrl+B)"
+                      aria-label="Collapse sidebar"
+                    >
+                      <PanelLeftCloseIcon className="h-4 w-4" />
+                    </button>
+                  )}
+
+                  {isMobileDrawer && (
+                    <button
+                      type="button"
+                      className="p-1.5 text-[var(--ink-subtle)] hover:text-[var(--ink)] cursor-pointer rounded-lg hover:bg-black/[0.04]"
+                      onClick={() => setIsMobileOpen(false)}
+                      aria-label="Close sidebar"
+                    >
+                      <XIcon className="h-5 w-5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Workspace Pill Selector */}
+              {onOpenProjectModal ? (
+                <button
+                  type="button"
+                  onClick={onOpenProjectModal}
+                  className="w-full flex items-center justify-between rounded-xl border border-black/[0.06] dark:border-white/[0.08] bg-white/80 dark:bg-[#181E1A]/80 hover:border-[var(--forest)]/40 hover:bg-black/[0.02] dark:hover:bg-white/[0.04] px-2.5 py-1.5 shadow-2xs transition-all cursor-pointer group text-left"
+                  title="Switch or create project workspace"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                    <span className="truncate text-xs font-semibold text-[var(--ink)]">
+                      {project?.clientCompany || "Aura Health Inc."}
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono text-[var(--forest)] dark:text-emerald-300 group-hover:underline shrink-0">
+                    Switch &rarr;
+                  </span>
+                </button>
+              ) : (
+                <div className="flex items-center justify-between rounded-xl border border-black/[0.06] dark:border-white/[0.08] bg-white/80 dark:bg-[#181E1A]/80 px-2.5 py-1.5 shadow-2xs">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                    <span className="truncate text-xs font-semibold text-[var(--ink)]">
+                      {project?.clientCompany || "Aura Health Inc."}
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono text-[var(--ink-subtle)] shrink-0">
+                    Workspace
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Navigation Section */}
+        <nav
+          className={`flex-1 overflow-y-auto ${
+            collapsed ? "px-2 py-3 space-y-4" : "px-3 py-3 space-y-4"
+          }`}
+        >
+          {renderNavSection("Workflow", coreWorkflowItems, collapsed, isMobileDrawer)}
+          {renderNavSection("Intelligence & Audit", toolsAndProofItems, collapsed, isMobileDrawer)}
+        </nav>
+
+        {/* Streamlined Footer */}
+        <div
+          className={`shrink-0 border-t border-black/[0.05] dark:border-white/[0.06] bg-[var(--paper)]/50 ${
+            collapsed ? "p-3 flex flex-col items-center gap-2.5" : "p-3.5 space-y-2"
+          }`}
+        >
+          {collapsed ? (
+            <>
+              {onOpenGuide && (
+                <button
+                  type="button"
+                  onClick={onOpenGuide}
+                  className="flex h-9 w-9 items-center justify-center rounded-xl text-[var(--ink-muted)] hover:text-[var(--forest)] hover:bg-[var(--forest-light)] cursor-pointer transition-colors"
+                  title="How Receipts Works — Quick Start Tour"
+                  aria-label="Quick Start Tour"
+                >
+                  <HelpCircleIcon className="h-4.5 w-4.5" />
+                </button>
+              )}
+              <div
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                title="Nemotron 3.5 & Verifier Active"
+              >
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              </div>
+            </>
+          ) : (
+            <>
+              {onOpenGuide && (
+                <button
+                  type="button"
+                  onClick={onOpenGuide}
+                  className="w-full flex items-center justify-between rounded-xl px-2.5 py-1.5 text-xs text-[var(--ink-muted)] hover:text-[var(--forest)] hover:bg-[var(--forest-light)]/70 transition-all cursor-pointer group"
+                >
+                  <span className="flex items-center gap-2 font-medium">
+                    <HelpCircleIcon className="h-4 w-4 text-[var(--forest)]" />
+                    <span>How Receipts Works</span>
+                  </span>
+                  <span className="text-[10px] font-mono text-[var(--ink-subtle)] group-hover:text-[var(--forest)]">
+                    Tour &rarr;
+                  </span>
+                </button>
+              )}
+
+              {/* Minimal Live Status Indicator */}
+              <div className="flex items-center justify-between rounded-xl border border-black/[0.05] dark:border-white/[0.06] bg-white/60 dark:bg-[#181E1A]/60 px-3 py-2 text-[11px] shadow-2xs">
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                  </span>
+                  <span className="font-medium text-[var(--ink-muted)]">
+                    Nemotron 3.5
+                  </span>
+                </div>
+                <span className="font-mono text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                  Active
                 </span>
               </div>
-              <p className="mt-1 text-[10px] leading-relaxed text-[var(--ink-muted)]">
-                Deterministic substring verifier active. Nebius Token Factory connected.
-              </p>
-            </div>
+            </>
           )}
         </div>
       </div>
@@ -356,7 +401,7 @@ export function Sidebar({
     <>
       {/* Permanent Desktop Sidebar with animated width collapse */}
       <aside
-        className={`hidden lg:flex lg:h-full lg:shrink-0 lg:flex-col border-r border-[var(--surface-border)] bg-[var(--paper)] transition-all duration-300 ease-in-out ${
+        className={`hidden lg:flex lg:h-full lg:shrink-0 lg:flex-col border-r border-[var(--surface-border)] bg-[var(--paper)]/92 backdrop-blur-sm transition-[width] duration-200 ease-out ${
           isCollapsed ? "lg:w-[72px]" : "lg:w-64"
         }`}
       >
