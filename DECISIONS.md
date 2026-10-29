@@ -1,38 +1,89 @@
 # Receipts Architectural Decisions & Open Questions
 
-## 1. Architectural Decisions
+## 1. Architectural Decision Records (ADRs)
 
 ### ADR 001: Next.js App Router with TypeScript & Tailwind CSS
-- **Decision:** Use Next.js 16 with App Router, TypeScript, and Tailwind CSS.
-- **Rationale:** Provides modern, type-safe fullstack React capabilities, fast server actions / API route support, and rapid utility styling without heavy design system dependencies.
-- **Trade-off:** Strict SSR hydration rules and file layout constraints, easily managed by keeping data-driven panels explicit.
-
-### ADR 002: Minimal External Dependencies
-- **Decision:** Restrict external runtime libraries strictly to `openai` (official client compatible with OpenAI-compatible endpoints such as Nebius Token Factory) and `zod` for runtime schema enforcement.
-- **Rationale:** Avoids dependency bloat, reduces security surface, and ensures clear, maintainable data structures.
-- **Trade-off:** UI components and state handlers are authored natively rather than imported from monolithic component suites.
-
-### ADR 003: Deterministic Evidence Verification Layer
-- **Decision:** Decouple model inference from evidence verification. Every candidate quote returned by an LLM is passed through a deterministic string matching check (`sourceText.includes(quote.trim())`) before display.
-- **Rationale:** LLMs can paraphrase or subtly alter quotes. Grounding must be strictly verified mathematically, not assumed.
-
-### ADR 004: In-Memory / Local Storage State for MVP
-- **Decision:** Defer databases and remote state synchronization. Operate on local state with exportable Markdown ledgers.
-- **Rationale:** Eliminates authentication overhead, privacy liabilities regarding sensitive client contract data, and cloud hosting costs.
+- **Decision:** Build the workstation using Next.js 16 (App Router), TypeScript 5, and Tailwind CSS 4 with Turbopack.
+- **Rationale:** Delivers type-safe fullstack React capabilities, server route handlers (`POST /api/extract`, `POST /api/parse-document`) that protect API secrets from browser exposure, and fast compile times with Turbopack.
+- **Trade-off:** Strict SSR hydration rules and file layout constraints, managed cleanly by keeping client components focused on interactive UI and domain state.
 
 ---
 
-## 2. Open Questions & Technical Risks
+### ADR 002: Minimal External Dependencies
+- **Decision:** Strictly avoid sprawling monolithic component libraries (MUI, AntD, Chakra) or heavy ORMs. Rely on native React 19, Tailwind CSS utility classes, `openai` (for Nebius Token Factory compatibility), and `zod` for strict runtime schema validation.
+- **Rationale:** Ensures maximum load speed, minimal attack surface, zero dependency conflicts, and zero build bloat.
+- **Trade-off:** UI components (modals, sliders, badges, tables) are authored natively within `src/components/`, which grants full custom control over the editorial aesthetic.
 
-1. **Nebius / NVIDIA Model Selection & Token Limits:**
-   - Which specific open-weights model hosted on Nebius (e.g. Llama 3.1 70B/8B, Mistral, or Qwen) delivers optimal extraction precision and strict JSON adherence within acceptable latency?
-   - Need to evaluate live model latency and cost on long email threads (3,000+ tokens).
+---
 
-2. **Fuzzy vs. Verbatim Substring Matching:**
-   - Raw client transcripts often have minor whitespace inconsistencies, line breaks, or curly quotes. Should the verification layer normalize whitespace and punctuation before checking for exact substrings?
+### ADR 003: Dual-Layer Deterministic Evidence Verification
+- **Decision:** Decouple semantic LLM extraction from quote authenticity verification. Every quote extracted by the model must be confirmed by an independent string search algorithm (`src/lib/verifier.ts`) directly in the source text.
+- **Rationale:** Large Language Models are prone to subtle hallucinations, paraphrasing, and quote alterations. For legal and commercial agreement tracking, fabricated quotes are catastrophic.
+- **Trade-off:** Requires robust normalization for Unicode curly quotes, line breaks, and multi-space formatting without allowing word substitutions.
 
-3. **Multi-Turn Scope Evolution:**
-   - When a proposal evolves over multiple messages before being accepted, should the UI track the chronological delta chain or only the terminal state?
+---
 
-4. **Market & Workflow Assumptions:**
-   - While the problem of unbilled scope creep is common, user adoption depends on minimal friction when copying and pasting conversation logs. The threshold of manual confirmation vs. cognitive load needs empirical testing with users.
+### ADR 004: Local-First Multi-Project Persistence
+- **Decision:** Persist project ledgers, review statuses, and custom items in browser `localStorage` (`src/lib/project-storage.ts`), rather than requiring an external cloud SQL database or user authentication.
+- **Rationale:**
+  1. Client communication often contains highly confidential trade secrets, billing rates, and NDAs. Storing text locally prevents data leaks and cloud liability.
+  2. Zero server maintenance costs and instant, zero-latency state loads.
+  3. Works completely offline for reviewing existing project ledgers.
+- **Trade-off:** Data is tied to the user's browser profile. Mitigated by one-click Markdown ledger export and JSON backup capabilities.
+
+---
+
+### ADR 005: Nebius Token Factory & Nemotron-3.5-Lightning Model Selection
+- **Decision:** Utilize Nebius Token Factory running `nvidia/Nemotron-3_5-Lightning` via OpenAI-compatible endpoints.
+- **Rationale:**
+  1. High instruction adherence and strict JSON output formatting via `response_format: { type: "json_object" }`.
+  2. Excellent linguistic comprehension for subtle speech acts (conditional assent, ambiguous scopes, soft rejections).
+  3. Bounded token efficiency: configured with `chat_template_kwargs: { enable_thinking: false }` to prevent unbounded reasoning token loops from exhausting completion budgets.
+- **Trade-off:** Requires a valid `NEBIUS_API_KEY` for live extraction. Addressed by offering manual fallback entry and bundled sample project data when running offline.
+
+---
+
+### ADR 006: Immutable Source Snapshot Freezing
+- **Decision:** Capture an immutable snapshot (`src/lib/source-snapshot.ts`) of the source text at the exact moment the extraction API is dispatched.
+- **Rationale:** If a user edits or deletes text in the input textarea while reviewing previously extracted candidates, the character offsets (`quoteStartIndex`, `quoteEndIndex`) would point to corrupted positions. Freezing the snapshot and detecting divergence ensures every candidate remains grounded in the exact document version it was extracted from.
+- **Trade-off:** If the user significantly modifies the input text, they must re-extract to add new candidates to the ledger.
+
+---
+
+### ADR 007: Lightweight Document Ingestion (`unpdf` & `mammoth`)
+- **Decision:** Use `unpdf` for PDF parsing and `mammoth` for DOCX/DOC processing in Next.js server route handlers, avoiding heavy native binaries (`pdf2json`, `tesseract.js`, or Puppeteer).
+- **Rationale:**
+  1. `unpdf` uses web-standard PDF.js without Node canvas dependencies, making it fast and portable.
+  2. `mammoth` extracts raw text and hierarchical paragraphs from Word files without external Office runtime dependencies.
+  3. Enables direct drag-and-drop of proposals, SOWs, and email export files directly into the workstation.
+- **Trade-off:** Optical Character Recognition (OCR) for scanned image-only PDFs is not supported; documents must have a selectable text layer.
+
+---
+
+### ADR 008: Editorial Archival Metaphor over AI Chat Tropes
+- **Decision:** Explicitly reject chat bubbles, conversational assistants, and floating robotic avatars. Adopt a physical archival ledger metaphor: warm paper canvas (`#F6F5F0`), deep forest ink (`#244D3A`), Newsreader serif typography, and tactile neo-brutalist status buttons.
+- **Rationale:** Freelancers and agencies need an authoritative, audit-ready operational record, not a chatty conversational bot. The design reinforces clarity, accountability, and legal precision.
+
+---
+
+## 2. Resolved Technical Questions
+
+1. **How should we handle reasoning / thinking token limits?**
+   - *Resolution:* Passed `chat_template_kwargs: { enable_thinking: false }` to Nebius Token Factory in `src/lib/nebius-extraction.ts` and set explicit system prompts instructing the model to emit only valid JSON.
+2. **How to prevent prompt injection from malicious client emails?**
+   - *Resolution:* All client-supplied source text is strictly wrapped inside `<<<UNTRUSTED_COMMUNICATION_SOURCE>>>` boundary tags, and the model is explicitly instructed to treat contents within those tags strictly as data, ignoring any embedded instructions or prompts.
+3. **Can the model confirm agreement items autonomously?**
+   - *Resolution:* Strictly forbidden. The schema disallows `confirmed` or `dismissed` in model outputs; only a human operator can confirm or dismiss items.
+4. **How do we handle informal email threads attempting to set baseline contract terms?**
+   - *Resolution:* Any model-suggested `baseline` candidate originating from correspondence is automatically downgraded to `proposed` with an explanatory note (`[Downgraded from suggested baseline: live correspondence cannot unilaterally alter contract baseline without verified contract amendment]`).
+
+---
+
+## 3. Future Roadmap & Open Considerations
+
+1. **Multi-User Cloud Sync & Workspaces:**
+   - Exploring optional end-to-end encrypted cloud synchronization (e.g. Supabase / CRDTs) for teams of 5+ collaborators who share the same client ledger.
+2. **Automated Diffing of Contract Versions:**
+   - Generating visual side-by-side diffs between initial contract SOWs and final verified agreement ledgers to attach directly to final client invoices.
+3. **Webhook Ingestion:**
+   - Direct webhooks for Slack channels and Google Workspace to stream conversations directly into pending review queues.
