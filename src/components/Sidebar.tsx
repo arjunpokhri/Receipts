@@ -219,11 +219,11 @@ export function Sidebar({
               <button
                 type="button"
                 onClick={() => setActiveTab("overview")}
-                className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--forest)] to-[#153224] text-white shadow-md shadow-[var(--forest)]/20 cursor-pointer transition-transform hover:scale-105"
+                className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white dark:bg-[#181E1A] border border-black/[0.08] dark:border-white/[0.1] shadow-md shadow-[var(--forest)]/10 cursor-pointer transition-transform hover:scale-105 p-1"
                 title="Receipts — Home / Overview"
                 aria-label="Home Overview"
               >
-                <div id="sidebar-brand-logo-collapsed-img" className="h-7 w-7 rounded-lg overflow-hidden flex items-center justify-center">
+                <div id="sidebar-brand-logo-collapsed-img" className="h-9 w-9 rounded-xl overflow-hidden flex items-center justify-center">
                   <img src="/Receipts_Verified.png" alt="Receipts Logo" className="h-full w-full object-contain" />
                 </div>
               </button>
@@ -249,17 +249,20 @@ export function Sidebar({
                     setActiveTab("overview");
                     if (isMobileDrawer) setIsMobileOpen(false);
                   }}
-                  className="flex items-center gap-2.5 text-left cursor-pointer group"
+                  className="flex items-center gap-3 text-left cursor-pointer group"
                 >
                   <div
                     id="sidebar-brand-logo-img"
-                    className="flex h-8 w-8 items-center justify-center rounded-xl overflow-hidden shadow-md shadow-[var(--forest)]/20 border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#181E1A] p-0.5 transition-transform group-hover:scale-105"
+                    className="flex h-12 w-12 items-center justify-center rounded-2xl overflow-hidden shadow-md shadow-[var(--forest)]/15 border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#181E1A] p-1 transition-transform group-hover:scale-105 shrink-0"
                   >
                     <img src="/Receipts_Verified.png" alt="Receipts Logo" className="h-full w-full object-contain" />
                   </div>
                   <div>
-                    <span className="font-serif text-lg font-bold tracking-tight text-[var(--ink)] block leading-tight">
+                    <span className="font-serif text-xl font-bold tracking-tight text-[var(--ink)] block leading-tight">
                       Receipts
+                    </span>
+                    <span className="text-[10px] font-sans font-medium text-[var(--ink-subtle)] uppercase tracking-wider block">
+                      Scope Ledger
                     </span>
                   </div>
                 </button>

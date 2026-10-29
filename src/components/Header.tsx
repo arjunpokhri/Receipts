@@ -194,10 +194,10 @@ export function Header({
         </button>
         {/* Mobile brand logo */}
         <div id="header-brand-logo" className="lg:hidden flex items-center gap-2">
-          <div id="header-brand-logo-img" className="h-7 w-7 rounded-lg overflow-hidden border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#181E1A] p-0.5 shadow-2xs">
+          <div id="header-brand-logo-img" className="h-10 w-10 rounded-xl overflow-hidden border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#181E1A] p-1 shadow-xs shrink-0">
             <img src="/Receipts_Verified.png" alt="Receipts Logo" className="h-full w-full object-contain" />
           </div>
-          <span className="font-serif text-base font-bold text-[var(--ink)]">Receipts</span>
+          <span className="font-serif text-lg font-bold text-[var(--ink)]">Receipts</span>
         </div>
 
         {/* Desktop sidebar collapse button */}

@@ -115,7 +115,7 @@ export function LogoIntroOverlay({ onAnimationComplete }: LogoIntroOverlayProps)
       {/* Centered logo container — positioned in center from frame 0 */}
       <div
         ref={logoRef}
-        className="fixed z-[10000] pointer-events-none flex items-center justify-center p-1.5 border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#181E1A] shadow-xl w-36 h-36 sm:w-44 sm:h-44 rounded-3xl"
+        className="fixed z-[10000] pointer-events-none flex items-center justify-center p-1.5 border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#181E1A] shadow-xl w-48 h-48 sm:w-60 sm:h-60 rounded-3xl p-2"
         style={{
           top: "50%",
           left: "50%",
