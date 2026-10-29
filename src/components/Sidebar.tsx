@@ -219,11 +219,11 @@ export function Sidebar({
               <button
                 type="button"
                 onClick={() => setActiveTab("overview")}
-                className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white dark:bg-[#181E1A] border border-black/[0.08] dark:border-white/[0.1] shadow-md shadow-[var(--forest)]/10 cursor-pointer transition-transform hover:scale-105 p-1"
+                className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white border border-black/[0.08] dark:border-white/[0.15] shadow-md shadow-black/10 cursor-pointer transition-transform hover:scale-105 p-1"
                 title="Receipts — Home / Overview"
                 aria-label="Home Overview"
               >
-                <div id="sidebar-brand-logo-collapsed-img" className="h-9 w-9 rounded-xl overflow-hidden flex items-center justify-center">
+                <div id="sidebar-brand-logo-collapsed-img" className="h-9 w-9 rounded-xl overflow-hidden flex items-center justify-center bg-white">
                   <img src="/Receipts_Verified.png" alt="Receipts Logo" className="h-full w-full object-contain" />
                 </div>
               </button>
@@ -253,7 +253,7 @@ export function Sidebar({
                 >
                   <div
                     id="sidebar-brand-logo-img"
-                    className="flex h-12 w-12 items-center justify-center rounded-2xl overflow-hidden shadow-md shadow-[var(--forest)]/15 border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#181E1A] p-1 transition-transform group-hover:scale-105 shrink-0"
+                    className="flex h-12 w-12 items-center justify-center rounded-2xl overflow-hidden shadow-md shadow-black/15 border border-black/[0.08] dark:border-white/[0.15] bg-white p-1 transition-transform group-hover:scale-105 shrink-0"
                   >
                     <img src="/Receipts_Verified.png" alt="Receipts Logo" className="h-full w-full object-contain" />
                   </div>
