@@ -21,6 +21,11 @@ const newsreader = Newsreader({
 export const metadata: Metadata = {
   title: "Receipts — Evidence-Backed Scope & Agreement Tracker",
   description: "Evidence-backed agreement and scope tracker for freelancers and small agencies.",
+  icons: {
+    icon: "/Receipts_Verified.png",
+    shortcut: "/Receipts_Verified.png",
+    apple: "/Receipts_Verified.png",
+  },
 };
 
 export default function RootLayout({
