@@ -19,9 +19,9 @@
   --sage-border: #D8E0D9;
 
   /* Semantic Status Tokens */
-  --amber-state: #C58A36;
-  --amber-bg: #FAF3E8;
-  --amber-border: #E8CA97;
+  --amber-state: #B84335;
+  --amber-bg: #FCF1EE;
+  --amber-border: #F3C3BC;
   --coral-state: #C95C4B;
   --coral-bg: #FAEEEC;
   --coral-border: #EAB2A9;
@@ -105,6 +105,25 @@
   --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-serif: var(--font-newsreader), Georgia, serif;
   --font-mono: var(--font-geist-mono), monospace;
+}
+
+
+/* Smooth Theme Transition System */
+html.theme-transitioning,
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+  transition: background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              fill 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transition-delay: 0s !important;
+}
+
+body {
+  transition: background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 body {
@@ -399,3 +418,24 @@ body {
   }
 }
 
+
+
+/* Hide Next.js Development Tools floating indicator */
+nextjs-portal,
+[data-nextjs-dev-overlay],
+[data-nextjs-toast],
+#nextjs-dev-tools {
+  display: none !important;
+}
+
+/* Seamless Logo Intro Hand-off & Zero-Flash Pre-Blur */
+html:not(.intro-done) body {
+  overflow: hidden !important;
+}
+
+html:not(.intro-done) #header-brand-logo-img,
+html:not(.intro-done) #sidebar-brand-logo-img,
+html:not(.intro-done) #sidebar-brand-logo-collapsed-img {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}

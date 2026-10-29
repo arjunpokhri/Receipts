@@ -8,7 +8,6 @@ import {
   ShieldCheckIcon,
   MessageSquareIcon,
   FileTextIcon,
-  SparklesIcon,
   XIcon,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
@@ -63,7 +62,7 @@ export function Sidebar({
       id: "custom" as ActiveTab,
       label: "Analyze Conversation",
       description: "Extract commitments & verify quotes",
-      icon: SparklesIcon,
+      icon: MessageSquareIcon,
       badge: "Live AI",
       badgeColor: "emerald",
     },
@@ -224,7 +223,9 @@ export function Sidebar({
                 title="Receipts — Home / Overview"
                 aria-label="Home Overview"
               >
-                <ReceiptIcon className="h-5 w-5 text-white" />
+                <div id="sidebar-brand-logo-collapsed-img" className="h-7 w-7 rounded-lg overflow-hidden flex items-center justify-center">
+                  <img src="/Receipts_Verified.png" alt="Receipts Logo" className="h-full w-full object-contain" />
+                </div>
               </button>
               {onToggleCollapse && (
                 <button
@@ -250,8 +251,11 @@ export function Sidebar({
                   }}
                   className="flex items-center gap-2.5 text-left cursor-pointer group"
                 >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--forest)] to-[#153224] text-white shadow-md shadow-[var(--forest)]/20 transition-transform group-hover:scale-105">
-                    <ReceiptIcon className="h-4 w-4 text-white" />
+                  <div
+                    id="sidebar-brand-logo-img"
+                    className="flex h-8 w-8 items-center justify-center rounded-xl overflow-hidden shadow-md shadow-[var(--forest)]/20 border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#181E1A] p-0.5 transition-transform group-hover:scale-105"
+                  >
+                    <img src="/Receipts_Verified.png" alt="Receipts Logo" className="h-full w-full object-contain" />
                   </div>
                   <div>
                     <span className="font-serif text-lg font-bold tracking-tight text-[var(--ink)] block leading-tight">

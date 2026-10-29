@@ -5,7 +5,6 @@ import {
   XIcon,
   CheckIcon,
   ReceiptIcon,
-  SparklesIcon,
   FileTextIcon,
   PlusIcon,
 } from "./icons";
@@ -265,7 +264,6 @@ export function ProjectModal({
                   type="submit"
                   className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[var(--forest)] to-[#153224] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer"
                 >
-                  <SparklesIcon className="h-3.5 w-3.5 text-emerald-300" />
                   <span>Create Workspace</span>
                 </button>
               </div>

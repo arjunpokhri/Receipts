@@ -7,7 +7,6 @@ import {
   CheckCircleIcon,
   ReceiptIcon,
   ArrowRightIcon,
-  SparklesIcon,
   LayersIcon,
   MessageSquareIcon,
   CheckIcon,
@@ -24,6 +23,7 @@ import { RevealSection } from "./RevealSection";
 import { QuickStartGuide } from "./QuickStartGuide";
 
 interface BentoOverviewProps {
+  onLoadDemo?: () => void;
   items: AgreementItem[];
   verifiedCount: number;
   onSelectTab: (tab: ActiveTab) => void;
@@ -41,6 +41,7 @@ export function BentoOverview({
   isGuideOpen,
   onCloseGuide,
   onOpenTour,
+  onLoadDemo,
 }: BentoOverviewProps) {
   const [activePreviewTab, setActivePreviewTab] = useState<"nav" | "viewer" | "sla">("nav");
 
@@ -194,7 +195,6 @@ export function BentoOverview({
                   onClick={() => onSelectTab("custom")}
                   className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[var(--forest)] to-[#1B3F2E] px-5 py-2.5 text-xs font-semibold text-white shadow-md shadow-[var(--forest)]/20 hover:shadow-lg hover:shadow-[var(--forest)]/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer"
                 >
-                  <SparklesIcon className="h-4 w-4 text-amber-300" />
                   <span>Analyze Conversation</span>
                 </button>
 
@@ -324,6 +324,47 @@ export function BentoOverview({
           </div>
         </div>
       </RevealSection>
+
+      {/* Clean Workspace Onboarding Banner (When items is empty) */}
+      {items.length === 0 && (
+        <RevealSection delayMs={30}>
+          <div className="rounded-3xl border border-[var(--forest)]/25 bg-gradient-to-r from-[var(--forest-light)]/90 via-white/80 to-[var(--forest-light)]/50 dark:from-[var(--forest)]/20 dark:via-[#181E1A] dark:to-[var(--forest)]/10 p-6 sm:p-7 backdrop-blur-md shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-5 transition-all">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2.5">
+                <span className="font-serif text-lg font-bold text-[var(--ink)]">
+                  Clean Workspace Ready for Testing
+                </span>
+                <span className="rounded-full bg-[var(--forest)]/15 text-[var(--forest)] dark:text-emerald-300 text-[11px] font-sans font-semibold px-2.5 py-0.5 border border-[var(--forest)]/20">
+                  Empty State
+                </span>
+              </div>
+              <p className="text-xs text-[var(--ink-muted)] max-w-xl leading-relaxed">
+                You are in a clean workspace ready for your own communication. Paste text in the Analyzer to extract commitments, or load our pre-verified sample dataset to explore the full evidence ledger immediately.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 shrink-0">
+              <button
+                type="button"
+                onClick={() => onSelectTab("custom")}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[var(--forest)] to-[#153224] px-4 py-2.5 text-xs font-semibold text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
+              >
+                <MessageSquareIcon className="h-3.5 w-3.5" />
+                <span>Paste Your Conversation</span>
+              </button>
+              {onLoadDemo && (
+                <button
+                  type="button"
+                  onClick={onLoadDemo}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-black/[0.1] dark:border-white/[0.12] bg-white dark:bg-[#161B18] px-4 py-2.5 text-xs font-semibold text-[var(--ink)] shadow-2xs hover:bg-[var(--surface-subtle)] hover:-translate-y-0.5 transition-all cursor-pointer"
+                >
+                  <LayersIcon className="h-3.5 w-3.5 text-[var(--forest)]" />
+                  <span>Load Sample Project (Aura Health)</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </RevealSection>
+      )}
 
       {/* 2. REAL STATE METRICS SUMMARY BAR */}
       <RevealSection delayMs={100}>
@@ -502,7 +543,7 @@ export function BentoOverview({
                     1
                   </span>
                   <div className="h-8 w-8 rounded-xl bg-[var(--forest-light)] flex items-center justify-center text-[var(--forest)]">
-                    <SparklesIcon className="h-4 w-4" />
+                    <MessageSquareIcon className="h-4 w-4" />
                   </div>
                 </div>
                 <h3 className="mt-3.5 font-serif text-base font-bold text-[var(--ink)] group-hover:text-[var(--forest)] transition-colors">
@@ -740,7 +781,6 @@ export function BentoOverview({
                 onClick={() => onSelectTab("custom")}
                 className="inline-flex items-center gap-2 rounded-xl bg-[var(--forest)] dark:bg-white px-5 py-2.5 text-xs font-semibold text-white dark:text-[#1B3F2E] hover:bg-[var(--forest-hover)] dark:hover:bg-emerald-50 transition-all cursor-pointer shadow-md hover:-translate-y-0.5 active:translate-y-0"
               >
-                <SparklesIcon className="h-4 w-4 text-amber-300 dark:text-amber-600" />
                 <span>Launch Live Extractor</span>
               </button>
               <button

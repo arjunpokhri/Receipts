@@ -48,11 +48,23 @@ export interface ProjectData {
   initialItems: AgreementItem[];
 }
 
+export const DEFAULT_CLEAN_PROJECT: ProjectData = {
+  id: "proj-clean-workspace",
+  title: "Client Scope Workspace",
+  clientName: "Client",
+  clientCompany: "Active Workspace",
+  contractorName: "Studio Mono",
+  startDate: "Oct 29, 2026",
+  currency: "USD",
+  threads: [],
+  initialItems: [],
+};
+
 export const SAMPLE_PROJECT: ProjectData = {
   id: "proj-aura-health-2026",
   title: "Aura Health — Brand & Product Architecture",
   clientName: "Elena Vance",
-  clientCompany: "Aura Health Inc.",
+  clientCompany: "Aura Health Inc. (Demo)",
   contractorName: "Marcus Miller (Studio Mono)",
   startDate: "Oct 2, 2026",
   currency: "USD",

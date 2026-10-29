@@ -2,11 +2,11 @@
 
 import React, { useState } from "react";
 import {
+  LayersIcon,
   MenuIcon,
   RefreshCwIcon,
   FileTextIcon,
   CheckIcon,
-  SparklesIcon,
   SunIcon,
   MoonIcon,
   PanelLeftCloseIcon,
@@ -20,6 +20,8 @@ import type { AgreementItem, ProjectData } from "@/lib/sample-data";
 import type { ActiveTab } from "./Sidebar";
 
 interface HeaderProps {
+  onLoadDemo?: () => void;
+  onClearWorkspace?: () => void;
   project: ProjectData;
   items: AgreementItem[];
   activeTab?: ActiveTab;
@@ -59,6 +61,8 @@ export function Header({
   onToggleSidebar,
   onOpenGuide,
   onOpenProjectModal,
+  onLoadDemo,
+  onClearWorkspace,
   verifiedCount,
   pendingCount,
 }: HeaderProps) {
@@ -188,6 +192,13 @@ export function Header({
         >
           <MenuIcon className="h-4 w-4" />
         </button>
+        {/* Mobile brand logo */}
+        <div id="header-brand-logo" className="lg:hidden flex items-center gap-2">
+          <div id="header-brand-logo-img" className="h-7 w-7 rounded-lg overflow-hidden border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#181E1A] p-0.5 shadow-2xs">
+            <img src="/Receipts_Verified.png" alt="Receipts Logo" className="h-full w-full object-contain" />
+          </div>
+          <span className="font-serif text-base font-bold text-[var(--ink)]">Receipts</span>
+        </div>
 
         {/* Desktop sidebar collapse button */}
         {onToggleSidebar && (
@@ -270,9 +281,34 @@ export function Header({
             className="hidden md:inline-flex items-center gap-1.5 rounded-xl border border-[var(--forest)]/30 bg-[var(--forest-light)]/60 dark:bg-[var(--forest)]/20 hover:bg-[var(--forest)] hover:text-white px-3 py-1.5 text-xs font-semibold text-[var(--forest)] dark:text-emerald-300 shadow-2xs transition-all cursor-pointer group"
             title="Analyze new correspondence"
           >
-            <SparklesIcon className="h-3.5 w-3.5 text-[var(--forest)] dark:text-emerald-300 group-hover:text-white transition-colors" />
             <span>Analyze</span>
           </button>
+        )}
+
+        {/* One-Click Demo / Clean State Switcher */}
+        {project.id === "proj-aura-health-2026" ? (
+          onClearWorkspace && (
+            <button
+              type="button"
+              onClick={onClearWorkspace}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#181E1A] hover:bg-[var(--surface-subtle)] px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-[var(--ink-muted)] hover:text-[var(--ink)] shadow-2xs transition-all cursor-pointer"
+              title="Clear to empty workspace"
+            >
+              <span>Clean State</span>
+            </button>
+          )
+        ) : (
+          onLoadDemo && (
+            <button
+              type="button"
+              onClick={onLoadDemo}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--forest)]/30 bg-[var(--forest-light)]/80 dark:bg-[var(--forest)]/25 hover:bg-[var(--forest)] hover:text-white px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-[var(--forest)] dark:text-emerald-300 shadow-2xs transition-all cursor-pointer group"
+              title="Load sample demonstration project (Aura Health)"
+            >
+              <LayersIcon className="h-3.5 w-3.5" />
+              <span>Load Demo Data</span>
+            </button>
+          )
         )}
 
         {/* Export Ledger Button */}

@@ -2,6 +2,8 @@
 
 import React, { useState, useMemo } from "react";
 import {
+  ReceiptIcon,
+  MessageSquareIcon,
   SearchIcon,
   FilterIcon,
   ShieldCheckIcon,
@@ -12,13 +14,13 @@ import {
   ClockIcon,
   FileTextIcon,
   ChevronRightIcon,
-  SparklesIcon,
   PlusIcon,
 } from "./icons";
 import type { AgreementItem } from "@/lib/sample-data";
 import type { CommitmentType, ApplicationStatus } from "@/lib/schema";
 
 interface AgreementLedgerProps {
+  onLoadDemo?: () => void;
   items: AgreementItem[];
   selectedItemId: string | null;
   onSelectItem: (item: AgreementItem) => void;
@@ -38,6 +40,7 @@ export function AgreementLedger({
   onRestoreItem,
   onOpenExtractor,
   onOpenAddItem,
+  onLoadDemo,
 }: AgreementLedgerProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ApplicationStatus | "all">("all");
@@ -140,7 +143,6 @@ export function AgreementLedger({
                 className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[var(--forest)] to-[#1B3F2E] px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 shrink-0 cursor-pointer transition-all"
                 title="Extract commitments from new client communication"
               >
-                <SparklesIcon className="h-3.5 w-3.5 text-amber-300" />
                 <span>Analyze Conversation</span>
               </button>
             )}

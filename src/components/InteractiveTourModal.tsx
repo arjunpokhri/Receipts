@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   ReceiptIcon,
   LayersIcon,
-  SparklesIcon,
   ShieldCheckIcon,
   MessageSquareIcon,
   ArrowRightIcon,
@@ -74,7 +73,7 @@ const TOUR_STEPS: TourStep[] = [
     headline: "Extract promises from emails & chat threads",
     description:
       "Paste in client emails, Slack transcripts, or change request notes. Nebius Token Factory (NVIDIA Nemotron 3.5) structures unstructured conversation into crisp, verifiable commercial commitments.",
-    icon: SparklesIcon,
+    icon: MessageSquareIcon,
     accentColor: "amber",
     tabTarget: "custom",
     tabLabel: "Try Live Conversation Extractor",

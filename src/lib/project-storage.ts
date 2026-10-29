@@ -1,4 +1,4 @@
-import { SAMPLE_PROJECT, type ProjectData } from "./sample-data";
+import { SAMPLE_PROJECT, DEFAULT_CLEAN_PROJECT, type ProjectData } from "./sample-data";
 
 export const RECEIPTS_PROJECTS_KEY = "receipts-custom-projects";
 export const RECEIPTS_ACTIVE_PROJECT_KEY = "receipts-active-project-id";
@@ -8,23 +8,26 @@ export const RECEIPTS_ACTIVE_PROJECT_KEY = "receipts-active-project-id";
  */
 export function loadAllProjects(): ProjectData[] {
   if (typeof window === "undefined") {
-    return [SAMPLE_PROJECT];
+    return [DEFAULT_CLEAN_PROJECT, SAMPLE_PROJECT];
   }
 
   try {
     const raw = localStorage.getItem(RECEIPTS_PROJECTS_KEY);
     if (!raw) {
-      return [SAMPLE_PROJECT];
+      return [DEFAULT_CLEAN_PROJECT, SAMPLE_PROJECT];
     }
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed) || parsed.length === 0) {
-      return [SAMPLE_PROJECT];
+      return [DEFAULT_CLEAN_PROJECT, SAMPLE_PROJECT];
     }
-    // Always guarantee SAMPLE_PROJECT is included in the list
+    const hasClean = parsed.some((p) => p.id === DEFAULT_CLEAN_PROJECT.id);
     const hasSample = parsed.some((p) => p.id === SAMPLE_PROJECT.id);
-    return hasSample ? parsed : [SAMPLE_PROJECT, ...parsed];
+    let result = parsed;
+    if (!hasClean) result = [DEFAULT_CLEAN_PROJECT, ...result];
+    if (!hasSample) result = [...result, SAMPLE_PROJECT];
+    return result;
   } catch {
-    return [SAMPLE_PROJECT];
+    return [DEFAULT_CLEAN_PROJECT, SAMPLE_PROJECT];
   }
 }
 

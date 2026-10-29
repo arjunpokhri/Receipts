@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Sidebar, type ActiveTab } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
+import { LogoIntroOverlay } from "@/components/LogoIntroOverlay";
 import { BentoOverview } from "@/components/BentoOverview";
 import { AgreementLedger } from "@/components/AgreementLedger";
 import { RequestReview } from "@/components/RequestReview";
@@ -14,7 +15,7 @@ import { InteractiveTourModal } from "@/components/InteractiveTourModal";
 import { AuroraBackground } from "@/components/AuroraBackground";
 import { ProjectModal } from "@/components/ProjectModal";
 import { AddAgreementItemModal } from "@/components/AddAgreementItemModal";
-import { SAMPLE_PROJECT, type AgreementItem, type ProjectData } from "@/lib/sample-data";
+import { SAMPLE_PROJECT, DEFAULT_CLEAN_PROJECT, type AgreementItem, type ProjectData } from "@/lib/sample-data";
 import { loadAllProjects, getActiveProjectId, setActiveProjectId } from "@/lib/project-storage";
 import { verifyEvidence } from "@/lib/verifier";
 import {
@@ -30,11 +31,11 @@ import {
 } from "@/lib/ledger-actions";
 
 export default function Home() {
-  const [project, setProject] = useState<ProjectData>(SAMPLE_PROJECT);
-  const [items, setItems] = useState<AgreementItem[]>(SAMPLE_PROJECT.initialItems);
+  const [project, setProject] = useState<ProjectData>(DEFAULT_CLEAN_PROJECT);
+  const [items, setItems] = useState<AgreementItem[]>([]);
   const [activeTab, setActiveTab] = useState<ActiveTab>("overview");
   const [selectedItemId, setSelectedItemId] = useState<string | null>(
-    SAMPLE_PROJECT.initialItems[0]?.id || null
+    null
   );
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isStorageInitialized, setIsStorageInitialized] = useState(false);
@@ -150,6 +151,8 @@ export default function Home() {
   }, [items, selectedItemId, isStorageInitialized]);
 
   const handleToggleTheme = () => {
+    document.documentElement.classList.add("theme-transitioning");
+
     setTheme((prev) => {
       const next = prev === "light" ? "dark" : "light";
       try {
@@ -170,6 +173,10 @@ export default function Home() {
       }
       return next;
     });
+
+    setTimeout(() => {
+      document.documentElement.classList.remove("theme-transitioning");
+    }, 280);
   };
 
   const handleToggleSidebar = () => {
@@ -231,7 +238,25 @@ export default function Home() {
     }
   };
 
-  const handleReset = () => {
+    const handleLoadDemo = () => {
+    setProject(SAMPLE_PROJECT);
+    setActiveProjectId(SAMPLE_PROJECT.id);
+    setItems(SAMPLE_PROJECT.initialItems);
+    setSelectedItemId(SAMPLE_PROJECT.initialItems[0]?.id || null);
+    try {
+      saveLedgerToStorage(SAMPLE_PROJECT.initialItems, SAMPLE_PROJECT.initialItems[0]?.id || null);
+    } catch {}
+  };
+
+  const handleClearWorkspace = () => {
+    setProject(DEFAULT_CLEAN_PROJECT);
+    setActiveProjectId(DEFAULT_CLEAN_PROJECT.id);
+    setItems([]);
+    setSelectedItemId(null);
+    clearLedgerStorage();
+  };
+
+const handleReset = () => {
     clearLedgerStorage();
     if (project.id === SAMPLE_PROJECT.id) {
       setItems(SAMPLE_PROJECT.initialItems);
@@ -283,6 +308,9 @@ export default function Home() {
 
   return (
     <div className="relative flex h-screen w-screen overflow-hidden bg-transparent text-[var(--ink)] font-sans antialiased transition-colors">
+      {/* Premium Logo Intro Splash Animation */}
+      <LogoIntroOverlay />
+
       {/* 3D Emerald Borealis Ambient Background Mesh */}
       <AuroraBackground />
 
@@ -306,6 +334,8 @@ export default function Home() {
         {/* Project Header (Persistent at top of main workspace) */}
         <Header
           project={project}
+          onLoadDemo={handleLoadDemo}
+          onClearWorkspace={handleClearWorkspace}
           items={items}
           activeTab={activeTab}
           onNavigateToTab={(tab) => setActiveTab(tab)}
@@ -327,7 +357,8 @@ export default function Home() {
           {activeTab === "overview" && (
             <div className="animate-fade-in">
               <BentoOverview
-                items={items}
+              items={items}
+              onLoadDemo={handleLoadDemo}
                 verifiedCount={verifiedCount}
                 onSelectTab={(tab) => setActiveTab(tab)}
                 onSelectItem={(item) => {
@@ -346,7 +377,8 @@ export default function Home() {
             <div className="grid grid-cols-1 gap-5 xl:grid-cols-12 animate-fade-in">
               <div className={selectedItem ? "xl:col-span-8" : "xl:col-span-12"}>
                 <AgreementLedger
-                  items={items}
+              items={items}
+              onLoadDemo={handleLoadDemo}
                   selectedItemId={selectedItemId}
                   onSelectItem={handleSelectItem}
                   onConfirmItem={handleConfirmItem}

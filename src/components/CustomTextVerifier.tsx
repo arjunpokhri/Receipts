@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import {
   ShieldCheckIcon,
   XCircleIcon,
-  SparklesIcon,
   InfoIcon,
   AlertTriangleIcon,
   RefreshCwIcon,
@@ -196,7 +195,7 @@ export function CustomTextVerifier({
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3.5">
             <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--forest)]/20 bg-[var(--forest-light)] text-[var(--forest)] shadow-2xs">
-              <SparklesIcon className="h-5 w-5 text-amber-500" />
+              <FileTextIcon className="h-5 w-5 text-[var(--forest)]" />
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2">
@@ -378,7 +377,6 @@ export function CustomTextVerifier({
               </>
             ) : (
               <>
-                <SparklesIcon className="h-4 w-4 text-amber-300" />
                 <span>Extract Commitments with Nebius</span>
                 <ArrowRightIcon className="h-3.5 w-3.5" />
               </>

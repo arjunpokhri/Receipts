@@ -12,7 +12,7 @@ echo ==========================================
 where node >nul 2>&1
 if %ERRORLEVEL% neq 0 (
     echo Error: Node.js is not installed or not in your PATH.
-    echo Please install Node.js (v18 or higher recommended) from https://nodejs.org/
+    echo Please install Node.js ^(v18 or higher recommended^) from https://nodejs.org/
     pause
     exit /b 1
 )
@@ -46,7 +46,7 @@ if not exist ".env.local" (
 :: 4. Check dependencies (node_modules)
 if not exist "node_modules" (
     echo Dependencies not found. Running npm install...
-    call npm.cmd install
+    call npm install
     if !ERRORLEVEL! neq 0 (
         echo Error: npm install failed.
         pause
@@ -61,4 +61,9 @@ echo Receipts will be available at: http://localhost:3000
 echo Press Ctrl+C to stop the server.
 echo ------------------------------------------
 
-call npm.cmd run dev
+call npm run dev
+if %ERRORLEVEL% neq 0 (
+    echo.
+    echo Server process ended with code %ERRORLEVEL%.
+    pause
+)
