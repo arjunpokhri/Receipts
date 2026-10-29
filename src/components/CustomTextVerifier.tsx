@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   ShieldCheckIcon,
   XCircleIcon,
@@ -13,6 +13,8 @@ import {
   DollarSignIcon,
   FileTextIcon,
   ArrowRightIcon,
+  UploadIcon,
+  XIcon,
 } from "./icons";
 import { verifyEvidence } from "@/lib/verifier";
 import { MECHANICAL_VERIFICATION_DISCLAIMER } from "@/lib/evaluate-extraction";
@@ -108,6 +110,109 @@ export function CustomTextVerifier({
     normalizeQuotesAndWhitespace: !strictMode,
   });
 
+  // Document Upload & Parsing State
+  const [uploadedFile, setUploadedFile] = useState<{
+    name: string;
+    size: number;
+    wordCount: number;
+  } | null>(null);
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const processFile = async (file: File) => {
+    setUploadError(null);
+    setIsUploadingFile(true);
+
+    try {
+      const fileName = file.name || "document";
+      const ext = fileName.toLowerCase().slice(fileName.lastIndexOf("."));
+
+      let extracted = "";
+      let wordCount = 0;
+
+      // Handle simple text and markdown files directly client-side
+      if (ext === ".txt" || ext === ".md" || ext === ".markdown" || file.type.startsWith("text/")) {
+        extracted = await file.text();
+        extracted = extracted.replace(/\r\n/g, "\n").trim();
+        wordCount = extracted.split(/\s+/).filter(Boolean).length;
+      } else {
+        // Send PDF, DOCX, DOC to /api/parse-document
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const res = await fetch("/api/parse-document", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || `Failed to parse ${fileName} (Status ${res.status})`);
+        }
+
+        extracted = data.text;
+        wordCount = data.wordCount || extracted.split(/\s+/).filter(Boolean).length;
+      }
+
+      if (!extracted || extracted.trim().length === 0) {
+        throw new Error(`No readable text could be extracted from "${fileName}".`);
+      }
+
+      setSourceText(extracted);
+      // Pick a sample quote for the manual tester
+      const candidateLine = extracted
+        .split("\n")
+        .map((l) => l.trim())
+        .find((l) => l.length >= 25 && l.length <= 150);
+      if (candidateLine) {
+        setTestQuote(candidateLine);
+      }
+
+      setUploadedFile({
+        name: fileName,
+        size: file.size,
+        wordCount,
+      });
+      setSnapshotSession(null);
+      setExtractionError(null);
+      setLastAddedItem(null);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Error parsing document.";
+      setUploadError(msg);
+    } finally {
+      setIsUploadingFile(false);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processFile(file);
+    }
+    e.target.value = "";
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processFile(file);
+    }
+  };
+
   const handleRunLiveExtraction = async () => {
     const analyzedSourceText = sourceText.trim();
     if (!analyzedSourceText) {
@@ -119,6 +224,8 @@ export function CustomTextVerifier({
     setSnapshotSession(null);
     setAddedCandidateIds(new Set());
     setLastAddedItem(null);
+                setUploadedFile(null);
+                setUploadError(null);
     setIsExtracting(true);
     setExtractionError(null);
 
@@ -237,6 +344,118 @@ export function CustomTextVerifier({
           </div>
         </div>
 
+        {/* Hidden File Input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".pdf,.docx,.doc,.md,.markdown,.txt"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+
+        {/* Document Ingestion Zone */}
+        <div
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={`relative rounded-2xl border-2 border-dashed transition-all p-4.5 sm:p-5 text-center cursor-pointer ${
+            isDragging
+              ? "border-[var(--forest)] bg-[var(--forest-light)]/70 ring-2 ring-[var(--forest)]/20"
+              : "border-black/[0.1] dark:border-white/[0.12] bg-[var(--surface-subtle)]/50 hover:border-[var(--forest)]/50 hover:bg-[var(--forest-light)]/20"
+          }`}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-3 text-left">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--forest-light)] dark:bg-[var(--forest)] text-[var(--forest)] dark:text-white shadow-2xs">
+                {isUploadingFile ? (
+                  <RefreshCwIcon className="h-5 w-5 animate-spin" />
+                ) : (
+                  <UploadIcon className="h-5 w-5" />
+                )}
+              </div>
+              <div>
+                <div className="font-semibold text-xs text-[var(--ink)] flex items-center gap-2">
+                  <span>{isUploadingFile ? "Extracting Document Text..." : "Import Contract or Scope Document"}</span>
+                  <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-white dark:bg-[#121614] border border-black/[0.08] dark:border-white/[0.1] text-[var(--ink-muted)] font-medium">
+                    PDF • DOCX • MD • TXT
+                  </span>
+                </div>
+                <p className="text-[11px] text-[var(--ink-muted)] mt-0.5">
+                  {isUploadingFile
+                    ? "Parsing and converting to verified source text..."
+                    : "Drag and drop your file here, or click to browse. Text is parsed cleanly for commitment extraction."}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              disabled={isUploadingFile}
+              onClick={(e) => {
+                e.stopPropagation();
+                fileInputRef.current?.click();
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-[#181E1A] border border-black/[0.08] dark:border-white/[0.12] text-[var(--ink)] shadow-2xs hover:border-[var(--forest)] hover:text-[var(--forest)] transition-all shrink-0 cursor-pointer"
+            >
+              <UploadIcon className="h-3.5 w-3.5" />
+              <span>Choose File</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Upload Error Banner */}
+        {uploadError && (
+          <div className="rounded-2xl border border-[var(--coral-state)]/30 bg-[var(--coral-bg)] p-3 text-xs flex items-center justify-between gap-2 text-[var(--coral-state)]">
+            <div className="flex items-center gap-2">
+              <AlertTriangleIcon className="h-4 w-4 shrink-0" />
+              <span>{uploadError}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setUploadError(null)}
+              className="text-[11px] underline hover:opacity-80 cursor-pointer"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
+        {/* Active Uploaded Document Info Bar */}
+        {uploadedFile && (
+          <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[var(--forest-light)]/80 border border-[var(--forest)]/30 text-xs shadow-2xs animate-fade-in">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--forest)] text-white">
+                <FileTextIcon className="h-4 w-4" />
+              </div>
+              <div>
+                <div className="font-semibold text-xs text-[var(--ink)] flex items-center gap-2">
+                  <span>{uploadedFile.name}</span>
+                  <span className="font-mono text-[10px] text-[var(--forest)] bg-white dark:bg-[#121614] px-2 py-0.5 rounded-full border border-[var(--forest)]/20 font-bold">
+                    {uploadedFile.wordCount.toLocaleString()} words • {(uploadedFile.size / 1024).toFixed(1)} KB
+                  </span>
+                </div>
+                <div className="text-[11px] text-[var(--forest)] font-medium">
+                  Active source document loaded into editor below.
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setUploadedFile(null);
+                setSourceText(AURA_PRESET_1_TEXT);
+                setTestQuote(AURA_PRESET_1_QUOTE);
+                setSnapshotSession(null);
+              }}
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--ink-muted)] hover:text-[var(--coral-state)] px-2.5 py-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+            >
+              <XIcon className="h-3.5 w-3.5" />
+              <span>Clear File</span>
+            </button>
+          </div>
+        )}
+
         {/* Scenario Selection Grid */}
         <div className="space-y-2 pt-1">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-xs">
@@ -258,6 +477,8 @@ export function CustomTextVerifier({
                 setSnapshotSession(null);
                 setExtractionError(null);
                 setLastAddedItem(null);
+                setUploadedFile(null);
+                setUploadError(null);
               }}
               className={`p-4 rounded-2xl text-left border transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-md ${
                 sourceText === AURA_PRESET_1_TEXT
@@ -288,6 +509,8 @@ export function CustomTextVerifier({
                 setSnapshotSession(null);
                 setExtractionError(null);
                 setLastAddedItem(null);
+                setUploadedFile(null);
+                setUploadError(null);
               }}
               className={`p-4 rounded-2xl text-left border transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-md ${
                 sourceText === AURA_PRESET_2_TEXT
@@ -318,6 +541,8 @@ export function CustomTextVerifier({
                 setSnapshotSession(null);
                 setExtractionError(null);
                 setLastAddedItem(null);
+                setUploadedFile(null);
+                setUploadError(null);
               }}
               className={`p-4 rounded-2xl text-left border transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-md ${
                 sourceText === AURA_PRESET_3_TEXT
